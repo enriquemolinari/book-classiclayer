@@ -1,5 +1,6 @@
-package ar.main;
+package layer.main;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -8,13 +9,15 @@ import org.jdbi.v3.core.statement.PreparedBatch;
 
 public class SetUpDatabase {
 
-  public void setUp() {
+  private String url;
 
-    // memory
-    // Jdbi jdbi = Jdbi.create("jdbc:derby:memory:mycinema;create=true");
+  public SetUpDatabase(String connUrl) {
+    this.url = connUrl;
+  }
 
-    // disk
-    Jdbi jdbi = Jdbi.create("jdbc:derby:/home/enrique/mycinema;create=true");
+  public void start() {
+
+    Jdbi jdbi = Jdbi.create(this.url);
 
     jdbi.useHandle(handle -> {
 
@@ -66,17 +69,17 @@ public class SetUpDatabase {
               + "foreign key (id_seat) references seat, "
               + "primary key (id_show, id_seat))");
 
-      handle.execute(
-          "CREATE TABLE ranking_detail (id_ranking_detail INT NOT NULL "
+      handle
+          .execute("CREATE TABLE rating_detail (id_rating_detail INT NOT NULL "
               + "primary key generated always as identity (start with 1,increment by 1), "
               + "id_movie INT not null, id_user INT not null, "
-              + "value decimal not null, "
+              + "value decimal(2,1) not null, "
               + "foreign key (id_movie) references movie, "
               + "foreign key (id_user) references users)");
 
-      handle.execute("CREATE TABLE ranking (id_ranking INT NOT NULL "
+      handle.execute("CREATE TABLE rating (id_rating INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
-          + "id_movie INT not null, value decimal not null, "
+          + "id_movie INT not null, value decimal(2,1) not null, "
           + "foreign key (id_movie) references movie)");
 
       // Movies
@@ -230,6 +233,16 @@ public class SetUpDatabase {
       handle.createUpdate(
           "INSERT INTO users (id_person, username, password, points) VALUES (?, ?, ?, 0)")
           .bind(0, idEnrique).bind(1, "emolinari").bind(2, "123").execute();
+
+      // A rating detail
+      handle.createUpdate(
+          "INSERT INTO rating_detail (id_movie, id_user, value) VALUES (?, ?, ?)")
+          .bind(0, 1).bind(1, 1).bind(2, new BigDecimal(4.5)).execute();
+
+      // A rating
+      handle
+          .createUpdate("INSERT INTO rating (id_movie, value) VALUES (?, ?, ?)")
+          .bind(0, 1).bind(2, new BigDecimal(4.5)).execute();
     });
 
     // jdbi.useHandle(handle -> {

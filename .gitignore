@@ -3,3 +3,6 @@
 .settings
 .project
 derby.log
+mem.log
+mem.properties
+mem.script
