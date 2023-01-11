@@ -266,11 +266,20 @@ public class SetUpDatabase {
 
       handle.createUpdate(
           "INSERT INTO rating_detail (id_movie, id_user, comment, value) VALUES (?, ?, ?, ?)")
-          .bind(0, 1).bind(1, 1).bind(2, "Great movie!")
+          .bind(0, idSchoolMovie).bind(1, 1).bind(2, "Great movie!")
           .bind(3, new BigDecimal(4.5)).execute();
 
       handle.createUpdate("INSERT INTO rating (id_movie, value) VALUES (?, ?)")
-          .bind(0, 1).bind(1, new BigDecimal(4.5)).execute();
+          .bind(0, idSchoolMovie).bind(1, new BigDecimal(4.5)).execute();
+
+      handle.createUpdate(
+          "INSERT INTO rating_detail (id_movie, id_user, comment, value) VALUES (?, ?, ?, ?)")
+          .bind(0, idFishMovie).bind(1, 1).bind(2, "Fantastic movie!!")
+          .bind(3, new BigDecimal(5)).execute();
+
+      handle.createUpdate("INSERT INTO rating (id_movie, value) VALUES (?, ?)")
+          .bind(0, idFishMovie).bind(1, new BigDecimal(5)).execute();
+
     });
 
     // jdbi.useHandle(handle -> {

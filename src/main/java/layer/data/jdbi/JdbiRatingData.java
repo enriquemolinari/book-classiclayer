@@ -19,7 +19,9 @@ public class JdbiRatingData implements RatingData {
     checkUserHasVoted(idUser, idMovie);
 
     jdbi.useTransaction(handle -> {
-      // this query should lock the rows using 'for update'
+      // there should be a lock here to make this work properly
+      // I will leave this without implemented it properly as it is not the purpose of this code
+      // reader: remember that locking using 'for update' does not work when use agregation functions
       var actualValues = handle.createQuery(
           "SELECT SUM(value) as total_sum, count(value) as total_count from rating_detail where id_movie = :idmovie")
           .bind("idmovie", idMovie).mapToMap().one();

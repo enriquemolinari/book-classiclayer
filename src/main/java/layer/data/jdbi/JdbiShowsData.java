@@ -1,0 +1,113 @@
+package layer.data.jdbi;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.jdbi.v3.core.Jdbi;
+import layer.data.api.DataException;
+import layer.data.api.PlayingRecord;
+import layer.data.api.SeatRecord;
+import layer.data.api.ShowRecord;
+import layer.data.api.ShowsData;
+
+public class JdbiShowsData implements ShowsData {
+
+  private static final int MINUTES_TO_KEEP_RESERVATION = 15;
+  private Jdbi jdbi;
+
+  public JdbiShowsData(Jdbi jdbi) {
+    this.jdbi = jdbi;
+  }
+
+  @Override
+  public List<PlayingRecord> playingNow(LocalDateTime showsUntil) {
+    return jdbi.withHandle(handle -> {
+      var playingNow = handle
+          .createQuery(
+              "select s.id_show, m.name, s.start_time, m.id_cover_image "
+                  + "from show s, movie m "
+                  + "where s.id_movie = m.id_movie and s.start_time <= :until")
+          .bind("until", showsUntil).mapToMap().list();
+
+      return playingNow.stream()
+          .map(l -> new PlayingRecord(Long.valueOf(l.get("id_show").toString()),
+              new ToLocalDate(l.get("start_time")).val(),
+              l.get("name").toString(), l.get("id_cover_image").toString()))
+          .collect(Collectors.toList());
+    });
+  }
+
+  @Override
+  public ShowRecord show(Long idShow) {
+    return jdbi.withHandle(handle -> {
+      var show = handle
+          .createQuery(
+              "select m.name, m.id_cover_image, m.duration, s.start_time, "
+                  + "b.reserved, b.confirmed, b.id_seat, se.number "
+                  + " from show s, booking b, seat se, movie m"
+                  + " where s.id_show = :idshow and m.id_movie = s.id_movie"
+                  + "  and s.id_show = b.id_show"
+                  + "  and s.id_theatre = se.id_theatre"
+                  + "  and b.id_seat = se.id_seat")
+          .bind("idshow", idShow).mapToMap().list();
+
+      var seats = new ArrayList<SeatRecord>();
+
+      var movieName = show.get(0).get("name").toString();
+      var coverImage = show.get(0).get("id_cover_image").toString();
+      var movieDuration =
+          Integer.valueOf(show.get(0).get("duration").toString());
+      var startTime = new ToLocalDate(show.get(0).get("start_time")).val();
+
+      for (Map<String, Object> map : show) {
+        seats.add(new SeatRecord(Long.valueOf(map.get("id_seat").toString()),
+            Integer.valueOf(map.get("number").toString()),
+            Boolean.valueOf(map.get("reserved").toString()),
+            Boolean.valueOf(map.get("confirmed").toString())));
+      }
+
+      return new ShowRecord(idShow, startTime, movieName, movieDuration,
+          coverImage, seats);
+    });
+  }
+
+  @Override
+  public void reserve(Long idShow, Long idUser, List<Long> idSeats) {
+    jdbi.useTransaction(handle -> {
+      var seatsChosen = handle
+          .createQuery("select id_show, id_seat, reserved, confirmed "
+              + "from booking "
+              + "where id_show = :idshow and id_seat in (<idseats>) for update")
+          .bind("idshow", idShow).bindList("idseats", idSeats).mapToMap()
+          .list();
+
+      checkReservedOrConfirmed(seatsChosen);
+
+      handle.createUpdate(
+          "UPDATE booking SET id_user = :iduser, reserved = true, reserved_until = :until "
+              + "where id_show = :idshow and id_seat in (<idseats>)")
+          .bind("iduser", idUser).bind("idshow", idShow)
+          .bind("until",
+              LocalDateTime.now().plusMinutes(MINUTES_TO_KEEP_RESERVATION))
+          .bindList("idseats", idSeats).execute();
+    });
+  }
+
+  private void checkReservedOrConfirmed(List<Map<String, Object>> seatsChosen) {
+    if (seatsChosen.stream().anyMatch(m -> {
+      return new ToBoolean(m.get("reserved")).val() == true
+          || new ToBoolean(m.get("confirmed")).val() == true;
+    })) {
+      throw new DataException(
+          "At least one of the selected seats has just been reserved");
+    }
+  }
+
+  @Override
+  public void confirm(Long idShow, Long idUser, List<Long> idSeats) {
+    // TODO Auto-generated method stub
+
+  }
+}
