@@ -1,5 +1,6 @@
 package layer.data.jdbi;
 
+import java.math.BigDecimal;
 import org.jdbi.v3.core.Jdbi;
 import layer.data.api.DataException;
 import layer.data.api.RatingData;
@@ -14,25 +15,39 @@ public class JdbiRatingData implements RatingData {
   }
 
   @Override
-  public void rate(Long idUser, Long idMovie, int value) {
+  public void rate(Long idUser, Long idMovie, BigDecimal value) {
     checkUserHasVoted(idUser, idMovie);
 
     jdbi.useTransaction(handle -> {
-
-      // this query should lock the rows
-      var actualRating = handle.createQuery(
-          "SELECT SUM(value)/count(value) as actual_rating from rating_detail where id_movie = :idmovie")
-          .bind("idmovie", idMovie).mapTo(Float.class).findOne();
+      // this query should lock the rows using 'for update'
+      var actualValues = handle.createQuery(
+          "SELECT SUM(value) as total_sum, count(value) as total_count from rating_detail where id_movie = :idmovie")
+          .bind("idmovie", idMovie).mapToMap().one();
 
       handle.createUpdate(
-          "INSERT INTO rate_detail(id_movie, id_user, value) values(:idmovie, :iduser, :value)")
+          "INSERT INTO rating_detail(id_movie, id_user, value) values(:idmovie, :iduser, :value)")
           .bind("idmovie", idMovie).bind("iduser", idUser).bind("value", value)
           .execute();
 
-      // TODO: continue...
+      var existARate = handle
+          .createQuery(
+              "SELECT 1 as exist_rate from rating where id_movie = :idmovie")
+          .bind("idmovie", idMovie).mapTo(Integer.class).findOne();
 
+      existARate.ifPresentOrElse((p) -> {
+        var newValue = (((BigDecimal) actualValues.get("total_sum")).add(value))
+            .floatValue() / ((Long) actualValues.get("total_count") + 1);
+
+        handle
+            .createUpdate(
+                "UPDATE rating set value = :newvalue where id_movie = :idmovie")
+            .bind("idmovie", idMovie).bind("newvalue", newValue).execute();
+      }, () -> {
+        handle.createUpdate(
+            "INSERT INTO rating (id_movie, value) values(:idmovie, :initialValue)")
+            .bind("idmovie", idMovie).bind("initialValue", value).execute();
+      });
     });
-
   }
 
   @Override
