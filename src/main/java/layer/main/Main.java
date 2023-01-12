@@ -1,9 +1,9 @@
 package layer.main;
 
 import org.jdbi.v3.core.Jdbi;
+import layer.business.DefaultMovies;
 import layer.data.JdbiMoviesData;
-import layer.data.api.FullMovieRecord;
-import layer.data.api.MovieCastRecord;
+import layer.web.Web;
 
 public class Main {
 
@@ -60,21 +60,21 @@ public class Main {
     // sd.reserve(1L, 1L, List.of(1L, 2L));
     // sd.confirm(1L, 1L, List.of(1L, 2L, 3L));
 
-    var md =
-        new JdbiMoviesData(Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb"));
-
-    FullMovieRecord fmr = md.movieDetail(1L);
-    System.out.println(fmr.shortMovie().duration());
-    System.out.println(fmr.shortMovie().idCoverImage());
-    System.out.println(fmr.shortMovie().name());
-    System.out.println(fmr.shortMovie().plot());
-    System.out.println(fmr.shortMovie().idMovie());
-
-    for (MovieCastRecord mcr : fmr.casts()) {
-      System.out.println(mcr.characterName());
-      System.out.println(mcr.name());
-      System.out.println(mcr.surname());
-    }
+    // var md =
+    // new JdbiMoviesData(Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb"));
+    //
+    // FullMovieRecord fmr = md.movieDetail(1L);
+    // System.out.println(fmr.shortMovie().duration());
+    // System.out.println(fmr.shortMovie().idCoverImage());
+    // System.out.println(fmr.shortMovie().name());
+    // System.out.println(fmr.shortMovie().plot());
+    // System.out.println(fmr.shortMovie().idMovie());
+    //
+    // for (MovieCastRecord mcr : fmr.casts()) {
+    // System.out.println(mcr.characterName());
+    // System.out.println(mcr.name());
+    // System.out.println(mcr.surname());
+    // }
     //
     // for (ShortMovieRecord mr : md.allMovies()) {
     // System.out.println(mr.duration());
@@ -84,5 +84,11 @@ public class Main {
     // System.out.println(mr.idMovie());
     // }
 
+    // var m = new MovieDurationFormat(62);
+    // System.out.println(m.val());
+
+    var jdbi = Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb");
+
+    new Web(8888, new DefaultMovies(new JdbiMoviesData(jdbi))).start();
   }
 }
