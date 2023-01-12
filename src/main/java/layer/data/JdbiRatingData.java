@@ -1,4 +1,4 @@
-package layer.data.jdbi;
+package layer.data;
 
 import java.math.BigDecimal;
 import org.jdbi.v3.core.Jdbi;

@@ -1,4 +1,4 @@
-package layer.data.jdbi;
+package layer.data;
 
 import java.util.List;
 import java.util.stream.Collectors;

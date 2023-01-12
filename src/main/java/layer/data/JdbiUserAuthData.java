@@ -1,4 +1,4 @@
-package layer.data.jdbi;
+package layer.data;
 
 import java.time.LocalDateTime;
 import java.util.Map;

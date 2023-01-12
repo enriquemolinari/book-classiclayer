@@ -1,4 +1,4 @@
-package layer.data.jdbi;
+package layer.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;

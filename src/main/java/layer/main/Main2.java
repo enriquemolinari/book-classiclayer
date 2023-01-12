@@ -2,7 +2,7 @@ package layer.main;
 
 import java.math.BigDecimal;
 import org.jdbi.v3.core.Jdbi;
-import layer.data.jdbi.JdbiRatingData;
+import layer.data.JdbiRatingData;
 
 public class Main2 {
 

@@ -1,9 +1,9 @@
 package layer.main;
 
 import org.jdbi.v3.core.Jdbi;
+import layer.data.JdbiMoviesData;
 import layer.data.api.FullMovieRecord;
 import layer.data.api.MovieCastRecord;
-import layer.data.jdbi.JdbiMoviesData;
 
 public class Main {
 

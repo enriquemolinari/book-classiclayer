@@ -1,4 +1,4 @@
-package layer.data.jdbi;
+package layer.data;
 
 class ToBoolean {
   private Boolean booleanValue;
