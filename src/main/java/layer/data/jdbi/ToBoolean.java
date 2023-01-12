@@ -1,6 +1,6 @@
 package layer.data.jdbi;
 
-public class ToBoolean {
+class ToBoolean {
   private Boolean booleanValue;
 
   public ToBoolean(Object value) {
@@ -10,5 +10,4 @@ public class ToBoolean {
   public boolean val() {
     return this.booleanValue;
   }
-
 }

@@ -1,8 +1,9 @@
 package layer.main;
 
-import java.util.List;
 import org.jdbi.v3.core.Jdbi;
-import layer.data.jdbi.JdbiShowsData;
+import layer.data.api.FullMovieRecord;
+import layer.data.api.MovieCastRecord;
+import layer.data.jdbi.JdbiMoviesData;
 
 public class Main {
 
@@ -36,7 +37,7 @@ public class Main {
     // voting
     // rd.rate(4L, 1L, new BigDecimal(3.2));
 
-    var sd = new JdbiShowsData(Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb"));
+    // var sd = new JdbiShowsData(Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb"));
     // var res = sd.playingNow(LocalDateTime.now().plusDays(3));
     // for (PlayingRecord pr : res) {
     // System.out.println(pr.movieName());
@@ -56,6 +57,32 @@ public class Main {
     // }
     // }
 
-    sd.reserve(1L, 1L, List.of(1L, 2L, 3L));
+    // sd.reserve(1L, 1L, List.of(1L, 2L));
+    // sd.confirm(1L, 1L, List.of(1L, 2L, 3L));
+
+    var md =
+        new JdbiMoviesData(Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb"));
+
+    FullMovieRecord fmr = md.movieDetail(1L);
+    System.out.println(fmr.shortMovie().duration());
+    System.out.println(fmr.shortMovie().idCoverImage());
+    System.out.println(fmr.shortMovie().name());
+    System.out.println(fmr.shortMovie().plot());
+    System.out.println(fmr.shortMovie().idMovie());
+
+    for (MovieCastRecord mcr : fmr.casts()) {
+      System.out.println(mcr.characterName());
+      System.out.println(mcr.name());
+      System.out.println(mcr.surname());
+    }
+    //
+    // for (ShortMovieRecord mr : md.allMovies()) {
+    // System.out.println(mr.duration());
+    // System.out.println(mr.idCoverImage());
+    // System.out.println(mr.name());
+    // System.out.println(mr.plot());
+    // System.out.println(mr.idMovie());
+    // }
+
   }
 }

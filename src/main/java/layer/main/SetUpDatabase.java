@@ -23,7 +23,7 @@ public class SetUpDatabase {
 
       handle.execute("CREATE TABLE movie (id_movie INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
-          + "name VARCHAR(255), id_cover_image varchar(10), duration INT)");
+          + "name VARCHAR(255), id_cover_image varchar(10), duration INT, plot varchar(750))");
 
       handle.execute("CREATE TABLE theatre (id_theatre INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
@@ -85,13 +85,16 @@ public class SetUpDatabase {
       // Movies
 
       long idSchoolMovie = handle.createUpdate(
-          "INSERT INTO movie (name, id_cover_image, duration) VALUES (?, ?, ?)")
+          "INSERT INTO movie (name, id_cover_image, duration, plot) VALUES (?, ?, ?, ?)")
           .bind(0, "Rock in the School").bind(1, "rockschool").bind(2, "109")
+          .bind(3,
+              "A teacher tries to teach Rock & Roll music and history to elementary school kids.")
           .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
 
       long idFishMovie = handle.createUpdate(
-          "INSERT INTO movie (name, id_cover_image, duration) VALUES (?, ?, ?)")
+          "INSERT INTO movie (name, id_cover_image, duration, plot) VALUES (?, ?, ?, ?)")
           .bind(0, "Small Fish").bind(1, "smallfish").bind(2, "125")
+          .bind(3, "A caring father teaches life values while fishing.")
           .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
 
       // People
@@ -149,23 +152,23 @@ public class SetUpDatabase {
 
       handle.createUpdate(
           "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
-          .bind(0, idJake).bind(1, idSchoolMovie).bind(2, "Dewey Finn")
+          .bind(0, idJake).bind(1, idSchoolMovie).bind(2, "Daniel Finne")
           .execute();
 
       handle.createUpdate(
           "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
-          .bind(0, idJosh).bind(1, idSchoolMovie).bind(2, "Ned Schneebly")
+          .bind(0, idJosh).bind(1, idSchoolMovie).bind(2, "Norber Carl")
           .execute();
 
       handle.createUpdate(
           "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
-          .bind(0, idErnest).bind(1, idFishMovie).bind(2, "Ed Bloom (senior)")
-          .execute();
+          .bind(0, idErnest).bind(1, idFishMovie)
+          .bind(2, "Edward Blomsky (senior)").execute();
 
       handle.createUpdate(
           "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
-          .bind(0, idNervan).bind(1, idFishMovie).bind(2, "Ed Bloom (young)")
-          .execute();
+          .bind(0, idNervan).bind(1, idFishMovie)
+          .bind(2, "Edward Blomsky (young)").execute();
 
       // Theatre
 

@@ -76,8 +76,8 @@ public class JdbiShowsData implements ShowsData {
   @Override
   public void reserve(Long idShow, Long idUser, List<Long> idSeats) {
     jdbi.useTransaction(handle -> {
-      var seatsChosen = handle
-          .createQuery("select id_show, id_seat, reserved, confirmed "
+      var seatsChosen = handle.createQuery(
+          "select id_show, id_seat, reserved, confirmed, reserved_until "
               + "from booking "
               + "where id_show = :idshow and id_seat in (<idseats>) for update")
           .bind("idshow", idShow).bindList("idseats", idSeats).mapToMap()
@@ -97,7 +97,8 @@ public class JdbiShowsData implements ShowsData {
 
   private void checkReservedOrConfirmed(List<Map<String, Object>> seatsChosen) {
     if (seatsChosen.stream().anyMatch(m -> {
-      return new ToBoolean(m.get("reserved")).val() == true
+      return (new ToBoolean(m.get("reserved")).val() == true && LocalDateTime
+          .now().isBefore(new ToLocalDate(m.get("reserved_until")).val()))
           || new ToBoolean(m.get("confirmed")).val() == true;
     })) {
       throw new DataException(
@@ -107,7 +108,27 @@ public class JdbiShowsData implements ShowsData {
 
   @Override
   public void confirm(Long idShow, Long idUser, List<Long> idSeats) {
-    // TODO Auto-generated method stub
+    jdbi.useTransaction(handle -> {
+      var seatsChosen = handle.createQuery(
+          "select id_show, id_user, id_seat, reserved, confirmed, reserved_until "
+              + "from booking "
+              + "where id_show = :idshow and id_seat in (<idseats>) for update")
+          .bind("idshow", idShow).bindList("idseats", idSeats).mapToMap()
+          .list();
 
+      if (!seatsChosen.stream().allMatch(m -> {
+        return idUser.equals(Long.valueOf((Integer) m.get("id_user")))
+            && new ToBoolean(m.get("reserved")).val() == true
+            && new ToBoolean(m.get("confirmed")).val() == false && LocalDateTime
+                .now().isBefore(new ToLocalDate(m.get("reserved_until")).val());
+      })) {
+        throw new DataException("You are not allowed to confirm the seats");
+      }
+
+      handle
+          .createUpdate("UPDATE booking SET confirmed = true "
+              + "where id_show = :idshow and id_seat in (<idseats>)")
+          .bind("idshow", idShow).bindList("idseats", idSeats).execute();
+    });
   }
 }
