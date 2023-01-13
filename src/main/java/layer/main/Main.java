@@ -1,8 +1,8 @@
 package layer.main;
 
 import org.jdbi.v3.core.Jdbi;
-import layer.business.DefaultMovies;
-import layer.data.JdbiMoviesData;
+import layer.business.DefaultMovieService;
+import layer.data.JdbiMoviesDataService;
 import layer.web.Web;
 
 public class Main {
@@ -89,6 +89,6 @@ public class Main {
 
     var jdbi = Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb");
 
-    new Web(8888, new DefaultMovies(new JdbiMoviesData(jdbi))).start();
+    new Web(8888, new DefaultMovieService(new JdbiMoviesDataService(jdbi))).start();
   }
 }

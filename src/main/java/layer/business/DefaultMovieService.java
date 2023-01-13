@@ -3,13 +3,13 @@ package layer.business;
 import java.util.stream.Collectors;
 import layer.business.api.Movie;
 import layer.business.api.Movies;
-import layer.data.api.MoviesData;
+import layer.data.api.MoviesDataService;
 
-public class DefaultMovies implements Movies {
+public class DefaultMovieService implements Movies {
 
-  private MoviesData movieData;
+  private MoviesDataService movieData;
 
-  public DefaultMovies(MoviesData movieData) {
+  public DefaultMovieService(MoviesDataService movieData) {
     this.movieData = movieData;
   }
 
@@ -19,7 +19,7 @@ public class DefaultMovies implements Movies {
 
     return movies.stream()
         .map(m -> new DefaultMovie(m.idMovie(), m.name(), m.duration(),
-            m.plot(), m.idCoverImage()).toMovieRecord())
+            m.plot(), m.idCoverImage()).toRecord())
         .collect(Collectors.toList());
   }
 
@@ -29,6 +29,6 @@ public class DefaultMovies implements Movies {
 
     return new DefaultMovie(m.shortMovie().idMovie(), m.shortMovie().name(),
         m.shortMovie().duration(), m.shortMovie().plot(),
-        m.shortMovie().idCoverImage(), m.casts()).toMovieRecord();
+        m.shortMovie().idCoverImage(), m.casts()).toRecord();
   }
 }

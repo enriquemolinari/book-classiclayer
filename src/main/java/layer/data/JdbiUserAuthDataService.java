@@ -5,19 +5,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.jdbi.v3.core.Jdbi;
-import layer.data.api.UserAuthData;
-import layer.data.api.UserRecord;
+import layer.data.api.UserAuthDataService;
+import layer.data.api.UserData;
 
-public class JdbiUserAuthData implements UserAuthData {
+public class JdbiUserAuthDataService implements UserAuthDataService {
 
   private Jdbi jdbi;
 
-  public JdbiUserAuthData(Jdbi jdbi) {
+  public JdbiUserAuthDataService(Jdbi jdbi) {
     this.jdbi = jdbi;
   }
 
   @Override
-  public Optional<UserRecord> login(String username, String password) {
+  public Optional<UserData> login(String username, String password) {
     Objects.requireNonNull(username, "username must not be null");
     Objects.requireNonNull(password, "password must not be null");
 
@@ -36,7 +36,7 @@ public class JdbiUserAuthData implements UserAuthData {
           .bind("id_user", user.get().get("id_user")).execute();
 
       return Optional
-          .of(new UserRecord(Long.valueOf(user.get().get("id_user").toString()),
+          .of(new UserData(Long.valueOf(user.get().get("id_user").toString()),
               user.get().get("username").toString(),
               Integer.valueOf(user.get().get("points").toString())));
     });

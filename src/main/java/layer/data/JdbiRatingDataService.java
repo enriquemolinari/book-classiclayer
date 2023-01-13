@@ -3,14 +3,14 @@ package layer.data;
 import java.math.BigDecimal;
 import org.jdbi.v3.core.Jdbi;
 import layer.data.api.DataException;
+import layer.data.api.RatingDataService;
 import layer.data.api.RatingData;
-import layer.data.api.RatingRecord;
 
-public class JdbiRatingData implements RatingData {
+public class JdbiRatingDataService implements RatingDataService {
 
   private Jdbi jdbi;
 
-  public JdbiRatingData(Jdbi jdbi) {
+  public JdbiRatingDataService(Jdbi jdbi) {
     this.jdbi = jdbi;
   }
 
@@ -53,7 +53,7 @@ public class JdbiRatingData implements RatingData {
   }
 
   @Override
-  public RatingRecord rate(Long idMovie) {
+  public RatingData rate(Long idMovie) {
     return jdbi.withHandle(handle -> {
       var ratingValue = handle
           .createQuery("SELECT value from rating where id_movie = :idmovie")
@@ -64,10 +64,10 @@ public class JdbiRatingData implements RatingData {
           .bind("idmovie", idMovie).mapTo(Long.class).one();
 
       if (ratingValue.isEmpty()) {
-        return new RatingRecord(numberOfVotes, 0F);
+        return new RatingData(numberOfVotes, 0F);
       }
 
-      return new RatingRecord(numberOfVotes, ratingValue.get());
+      return new RatingData(numberOfVotes, ratingValue.get());
     });
   }
 

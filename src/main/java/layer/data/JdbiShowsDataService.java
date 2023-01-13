@@ -7,40 +7,41 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.jdbi.v3.core.Jdbi;
 import layer.data.api.DataException;
-import layer.data.api.PlayingRecord;
-import layer.data.api.SeatRecord;
-import layer.data.api.ShowRecord;
-import layer.data.api.ShowsData;
+import layer.data.api.PlayingData;
+import layer.data.api.SeatData;
+import layer.data.api.ShowData;
+import layer.data.api.ShowsDataService;
 
-public class JdbiShowsData implements ShowsData {
+public class JdbiShowsDataService implements ShowsDataService {
 
   private static final int MINUTES_TO_KEEP_RESERVATION = 15;
   private Jdbi jdbi;
 
-  public JdbiShowsData(Jdbi jdbi) {
+  public JdbiShowsDataService(Jdbi jdbi) {
     this.jdbi = jdbi;
   }
 
   @Override
-  public List<PlayingRecord> playingNow(LocalDateTime showsUntil) {
+  public List<PlayingData> playingNow(LocalDateTime showsUntil) {
     return jdbi.withHandle(handle -> {
-      var playingNow = handle
-          .createQuery(
-              "select s.id_show, m.name, s.start_time, m.id_cover_image "
-                  + "from show s, movie m "
-                  + "where s.id_movie = m.id_movie and s.start_time <= :until")
+      var playingNow = handle.createQuery(
+          "select s.id_show, m.name, m.duration, s.start_time, m.id_cover_image "
+              + "from show s, movie m "
+              + "where s.id_movie = m.id_movie and s.start_time <= :until")
           .bind("until", showsUntil).mapToMap().list();
 
       return playingNow.stream()
-          .map(l -> new PlayingRecord(Long.valueOf(l.get("id_show").toString()),
+          .map(l -> new PlayingData(Long.valueOf(l.get("id_show").toString()),
               new ToLocalDate(l.get("start_time")).val(),
-              l.get("name").toString(), l.get("id_cover_image").toString()))
-          .collect(Collectors.toList());
+              l.get("name").toString(),
+              Integer.valueOf(l.get("duration").toString()),
+              l.get("id_cover_image").toString()))
+          .collect(Collectors.toUnmodifiableList());
     });
   }
 
   @Override
-  public ShowRecord show(Long idShow) {
+  public ShowData show(Long idShow) {
     return jdbi.withHandle(handle -> {
       var show = handle
           .createQuery(
@@ -53,7 +54,7 @@ public class JdbiShowsData implements ShowsData {
                   + "  and b.id_seat = se.id_seat")
           .bind("idshow", idShow).mapToMap().list();
 
-      var seats = new ArrayList<SeatRecord>();
+      var seats = new ArrayList<SeatData>();
 
       var movieName = show.get(0).get("name").toString();
       var coverImage = show.get(0).get("id_cover_image").toString();
@@ -62,13 +63,13 @@ public class JdbiShowsData implements ShowsData {
       var startTime = new ToLocalDate(show.get(0).get("start_time")).val();
 
       for (Map<String, Object> map : show) {
-        seats.add(new SeatRecord(Long.valueOf(map.get("id_seat").toString()),
+        seats.add(new SeatData(Long.valueOf(map.get("id_seat").toString()),
             Integer.valueOf(map.get("number").toString()),
             Boolean.valueOf(map.get("reserved").toString()),
             Boolean.valueOf(map.get("confirmed").toString())));
       }
 
-      return new ShowRecord(idShow, startTime, movieName, movieDuration,
+      return new ShowData(idShow, startTime, movieName, movieDuration,
           coverImage, seats);
     });
   }
