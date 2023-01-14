@@ -2,7 +2,7 @@ package layer.business.api;
 
 public interface Movies {
 
-  Iterable<Movie> movies();
+  Iterable<MovieRecord> movies();
 
-  Movie detail(Long id);
+  MovieRecord detail(Long id);
 }

@@ -25,9 +25,11 @@ public class JdbiShowsDataService implements ShowsDataService {
   public List<PlayingData> playingNow(LocalDateTime showsUntil) {
     return jdbi.withHandle(handle -> {
       var playingNow = handle.createQuery(
-          "select s.id_show, m.name, m.duration, s.start_time, m.id_cover_image "
-              + "from show s, movie m "
-              + "where s.id_movie = m.id_movie and s.start_time <= :until")
+          "select s.id_show, m.name, m.duration, s.start_time, m.id_cover_image, t.name as tname "
+              + "from show s, movie m, theatre t "
+              + "where s.id_movie = m.id_movie "
+              + "and t.id_theatre = s.id_theatre "
+              + "and s.start_time <= :until")
           .bind("until", showsUntil).mapToMap().list();
 
       return playingNow.stream()
@@ -35,7 +37,7 @@ public class JdbiShowsDataService implements ShowsDataService {
               new ToLocalDate(l.get("start_time")).val(),
               l.get("name").toString(),
               Integer.valueOf(l.get("duration").toString()),
-              l.get("id_cover_image").toString()))
+              l.get("id_cover_image").toString(), l.get("tname").toString()))
           .collect(Collectors.toUnmodifiableList());
     });
   }
@@ -43,24 +45,25 @@ public class JdbiShowsDataService implements ShowsDataService {
   @Override
   public ShowData show(Long idShow) {
     return jdbi.withHandle(handle -> {
-      var show = handle
-          .createQuery(
-              "select m.name, m.id_cover_image, m.duration, s.start_time, "
-                  + "b.reserved, b.confirmed, b.id_seat, se.number "
-                  + " from show s, booking b, seat se, movie m"
-                  + " where s.id_show = :idshow and m.id_movie = s.id_movie"
-                  + "  and s.id_show = b.id_show"
-                  + "  and s.id_theatre = se.id_theatre"
-                  + "  and b.id_seat = se.id_seat")
+      var show = handle.createQuery(
+          "select m.name, m.id_cover_image, m.duration, t.idtheatre, t.name as tname, s.start_time, "
+              + "b.reserved, b.confirmed, b.id_seat, se.number "
+              + " from show s, booking b, seat se, movie m, theatre t "
+              + " where s.id_show = :idshow and m.id_movie = s.id_movie"
+              + "  and s.id_show = b.id_show"
+              + "  and s.id_theatre = se.id_theatre"
+              + "  and se.id_theatre = t.id_theatre"
+              + "  and b.id_seat = se.id_seat")
           .bind("idshow", idShow).mapToMap().list();
 
       var seats = new ArrayList<SeatData>();
-
       var movieName = show.get(0).get("name").toString();
       var coverImage = show.get(0).get("id_cover_image").toString();
       var movieDuration =
           Integer.valueOf(show.get(0).get("duration").toString());
       var startTime = new ToLocalDate(show.get(0).get("start_time")).val();
+      var idTheatre = Long.valueOf(show.get(0).get("id_theatre").toString());
+      var theatreName = show.get(0).get("tname").toString();
 
       for (Map<String, Object> map : show) {
         seats.add(new SeatData(Long.valueOf(map.get("id_seat").toString()),
@@ -70,7 +73,7 @@ public class JdbiShowsDataService implements ShowsDataService {
       }
 
       return new ShowData(idShow, startTime, movieName, movieDuration,
-          coverImage, seats);
+          coverImage, idTheatre, theatreName, seats);
     });
   }
 

@@ -1,8 +1,10 @@
 package layer.main;
 
 import org.jdbi.v3.core.Jdbi;
-import layer.business.DefaultMovieService;
+import layer.business.DefaultCinemaShows;
+import layer.business.DefaultMovies;
 import layer.data.JdbiMoviesDataService;
+import layer.data.JdbiShowsDataService;
 import layer.web.Web;
 
 public class Main {
@@ -89,6 +91,11 @@ public class Main {
 
     var jdbi = Jdbi.create("jdbc:hsqldb:hsql://localhost/xdb");
 
-    new Web(8888, new DefaultMovieService(new JdbiMoviesDataService(jdbi))).start();
+    new Web(8888, new DefaultMovies(new JdbiMoviesDataService(jdbi)),
+        new DefaultCinemaShows(new JdbiShowsDataService(jdbi))).start();
+
+    // var s = new Show(1L, LocalDateTime.now(), 130);
+    // System.out.println(s.startDayTime());
+    // System.out.println(s.finishAtTime());
   }
 }
