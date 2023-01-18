@@ -10,24 +10,29 @@ class Theatre {
 
   private Long id;
   private String name;
-  private List<Seat> seats;
+  private List<Seat> seats = new ArrayList<>();
 
-  public Theatre(String name) {
-    this.name = name;
-    this.seats = new ArrayList<>();
-  }
-
-  public Theatre(Long id, String name) {
+  public Theatre(String name, List<SeatData> seats) {
     this(name);
-    this.id = id;
-  }
 
-  public Theatre(Long id, String name, List<SeatData> seats) {
-    this(id, name);
     for (SeatData seatData : seats) {
       this.seats.add(new Seat(seatData.idSeat(), seatData.number(),
           (!seatData.confirmed() || !seatData.reserved())));
     }
+  }
+
+  public Theatre(String theatreName) {
+    this.name = theatreName;
+  }
+
+  public Theatre(Long id, String name, List<SeatData> seats) {
+    this(name, seats);
+    this.id = id;
+  }
+
+  List<Integer> numbers(List<Long> ids) {
+    return this.seats.stream().filter(s -> ids.contains(s.id()))
+        .map(s -> s.number()).collect(Collectors.toUnmodifiableList());
   }
 
   Iterable<SeatRecord> seats() {

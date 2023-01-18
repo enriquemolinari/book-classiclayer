@@ -25,7 +25,9 @@
 			<artifactId>slf4j-simple</artifactId>
 			<version>2.0.6</version>
 		</dependency>
-
+	
+		<!-- Database HSQLDB -->
+	
 		<dependency>
 			<groupId>org.hsqldb</groupId>
 			<artifactId>hsqldb</artifactId>
@@ -39,10 +41,11 @@
 			<version>3.35.0</version>
 		</dependency>
 
+		<!-- Mail Client -->
 		<dependency>
-			<groupId>org.jdbi</groupId>
-			<artifactId>jdbi3-sqlobject</artifactId>
-			<version>3.35.0</version>
+			<groupId>com.sun.mail</groupId>
+			<artifactId>jakarta.mail</artifactId>
+			<version>2.0.1</version>
 		</dependency>
 
 		<!-- Encrypt -->

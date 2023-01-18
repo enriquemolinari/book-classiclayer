@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.jdbi.v3.core.Jdbi;
+import layer.data.api.FullUserData;
 import layer.data.api.UserAuthDataService;
 import layer.data.api.UserData;
 
@@ -40,5 +41,24 @@ public class JdbiUserAuthDataService implements UserAuthDataService {
               user.get().get("username").toString(),
               Integer.valueOf(user.get().get("points").toString())));
     });
+  }
+
+  @Override
+  public FullUserData details(Long idUser) {
+    return jdbi.withHandle(handle -> {
+      var maybeUser = handle.createQuery(
+          "SELECT id_user, username, points, name, surname, email from users u, person p "
+              + "where p.id_person = u.id_person and id_user = :iduser")
+          .bind("iduser", idUser).mapToMap().findOne();
+
+      return maybeUser.map(user -> new FullUserData(
+          new UserData(Long.valueOf(user.get("id_user").toString()),
+              user.get("username").toString(),
+              Integer.valueOf(user.get("points").toString())),
+          user.get("name").toString(), user.get("surname").toString(),
+          user.get("email").toString())).get();
+
+    });
+
   }
 }

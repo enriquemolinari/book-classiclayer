@@ -19,7 +19,9 @@ class SetUpDatabase {
 
     Jdbi jdbi = Jdbi.create(this.url);
 
-    jdbi.useHandle(handle -> {
+    jdbi.useTransaction(handle -> {
+
+      handle.execute("DROP SCHEMA PUBLIC CASCADE");
 
       handle.execute("CREATE TABLE movie (id_movie INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
@@ -32,7 +34,7 @@ class SetUpDatabase {
       handle.execute("CREATE TABLE show (id_show INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
           + "id_movie INT not null, id_theatre INT not null, "
-          + "start_time timestamp not null, "
+          + "start_time timestamp not null, price decimal(4,2), "
           + "foreign key (id_movie) references movie, "
           + "foreign key (id_theatre) references theatre)");
 
@@ -60,6 +62,13 @@ class SetUpDatabase {
       handle.execute("CREATE TABLE users_audit (id_user_audit INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
           + "login_date timestamp not null, id_user INT not null, "
+          + "foreign key (id_user) references users)");
+
+      handle.execute("CREATE TABLE sale (id_sale INT NOT NULL "
+          + "primary key generated always as identity (start with 1,increment by 1), "
+          + "id_show INT not null, amount decimal(6,2), id_user INT not null, "
+          + "payed_at timestamp not null, "
+          + "foreign key (id_show) references show, "
           + "foreign key (id_user) references users)");
 
       handle.execute(
@@ -184,27 +193,31 @@ class SetUpDatabase {
 
       // show 1
       handle.createUpdate(
-          "INSERT INTO show (id_movie, id_theatre, start_time) VALUES (?, ?, ?)")
+          "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idFishMovie).bind(1, idTheatreA)
-          .bind(2, LocalDateTime.now().plusDays(2)).execute();
+          .bind(2, LocalDateTime.now().plusDays(2)).bind(3, new BigDecimal(21))
+          .execute();
 
       // show 2
       handle.createUpdate(
-          "INSERT INTO show (id_movie, id_theatre, start_time) VALUES (?, ?, ?)")
+          "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idFishMovie).bind(1, idTheatreA)
-          .bind(2, LocalDateTime.now().plusDays(3)).execute();
+          .bind(2, LocalDateTime.now().plusDays(3)).bind(3, new BigDecimal(21))
+          .execute();
 
       // show 3
       handle.createUpdate(
-          "INSERT INTO show (id_movie, id_theatre, start_time) VALUES (?, ?, ?)")
+          "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idSchoolMovie).bind(1, idTheatreB)
-          .bind(2, LocalDateTime.now().plusDays(1)).execute();
+          .bind(2, LocalDateTime.now().plusDays(1)).bind(3, new BigDecimal(19))
+          .execute();
 
       // show 4
       handle.createUpdate(
-          "INSERT INTO show (id_movie, id_theatre, start_time) VALUES (?, ?, ?)")
+          "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idSchoolMovie).bind(1, idTheatreB)
-          .bind(2, LocalDateTime.now().plusDays(1).plusHours(5)).execute();
+          .bind(2, LocalDateTime.now().plusDays(1).plusHours(5))
+          .bind(3, new BigDecimal(19)).execute();
 
       // Seats from Theatre A
 
@@ -284,26 +297,5 @@ class SetUpDatabase {
           .bind(0, idFishMovie).bind(1, new BigDecimal(5)).execute();
 
     });
-
-    // jdbi.useHandle(handle -> {
-    // List<Map<String, Object>> map =
-    // handle.createQuery("SELECT * FROM seat").mapToMap().list();
-    //
-    // for (Map<String, Object> map2 : map) {
-    // System.out.println(map2.get("id_theatre") + "->" + map2.get("id_seat")
-    // + "->" + map2.get("number"));
-    // }
-    // });
-
-    // jdbi.useHandle(handle -> {
-    // List<Map<String, Object>> map =
-    // handle.createQuery("SELECT * FROM booking").mapToMap().list();
-    //
-    // for (Map<String, Object> map2 : map) {
-    // System.out.println(map2.get("id_show") + "->" + map2.get("id_seat")
-    // + "->" + map2.get("reserved"));
-    // }
-    // });
-
   }
 }

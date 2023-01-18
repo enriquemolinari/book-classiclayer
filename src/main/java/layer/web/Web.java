@@ -24,6 +24,9 @@ public class Web {
     app.get("/movies", allMovies());
     app.get("/movie", movieDetail());
     app.get("/playing", playing());
+    app.get("/show", show());
+    app.post("/reserve", reserve());
+    app.post("/pay", confirmReservation());
 
     app.exception(CinemaException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
@@ -41,10 +44,37 @@ public class Web {
     });
   }
 
+  private Handler confirmReservation() {
+    return ctx -> {
+      var r = ctx.bodyAsClass(PaymentRequest.class);
+
+      var ticket =
+          this.shows.pay(r.toCreditCardRecord(), r.ids(), r.idu(), r.seats());
+      ctx.json(Map.of("result", "success", "ticket", ticket));
+    };
+  }
+
+  private Handler reserve() {
+    return ctx -> {
+      var request = ctx.bodyAsClass(ReservationRequest.class);
+
+      this.shows.makeReservation(request.ids(), request.idu(), request.seats());
+      ctx.json(Map.of("result", "success"));
+    };
+  }
+
   private Handler playing() {
     return ctx -> {
       ctx.json(Map.of("result", "success", "showsThisWeek",
           this.shows.playingThisWeek()));
+    };
+  }
+
+
+  private Handler show() {
+    return ctx -> {
+      ctx.json(Map.of("result", "success", "show",
+          this.shows.show(ctx.queryParamAsClass("id", Long.class).get())));
     };
   }
 
@@ -56,8 +86,8 @@ public class Web {
 
   private Handler movieDetail() {
     return ctx -> {
-      ctx.json(Map.of("result", "success", "movie", this.movies
-          .detail(ctx.queryParamAsClass("idmovie", Long.class).get())));
+      ctx.json(Map.of("result", "success", "movie",
+          this.movies.detail(ctx.queryParamAsClass("id", Long.class).get())));
     };
   }
 }

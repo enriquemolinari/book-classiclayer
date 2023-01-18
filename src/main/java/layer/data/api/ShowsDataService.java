@@ -9,9 +9,11 @@ public interface ShowsDataService {
 
   ShowData show(Long idShow);
 
+  boolean isReservedBy(Long idShow, Long idUser, List<Long> idSeats);
+
   void reserve(Long idShow, Long idUser, List<Long> idSeats)
       throws DataException;
 
-  void confirm(Long idShow, Long idUser, List<Long> idSeats)
-      throws DataException;
+  ShowConfirmed confirm(Long idShow, Long idUser, List<Long> idSeats,
+      float totalAmount, int newPoints) throws DataException;
 }

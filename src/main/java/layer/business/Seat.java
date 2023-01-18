@@ -22,4 +22,11 @@ public class Seat {
     return new SeatRecord(id, number, available);
   }
 
+  Long id() {
+    return this.id;
+  }
+
+  public int number() {
+    return this.number;
+  }
 }

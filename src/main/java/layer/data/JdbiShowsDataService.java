@@ -1,5 +1,6 @@
 package layer.data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +10,7 @@ import org.jdbi.v3.core.Jdbi;
 import layer.data.api.DataException;
 import layer.data.api.PlayingData;
 import layer.data.api.SeatData;
+import layer.data.api.ShowConfirmed;
 import layer.data.api.ShowData;
 import layer.data.api.ShowsDataService;
 
@@ -25,7 +27,7 @@ public class JdbiShowsDataService implements ShowsDataService {
   public List<PlayingData> playingNow(LocalDateTime showsUntil) {
     return jdbi.withHandle(handle -> {
       var playingNow = handle.createQuery(
-          "select s.id_show, m.name, m.duration, s.start_time, m.id_cover_image, t.name as tname "
+          "select s.id_show, s.price, m.name, m.duration, s.start_time, m.id_cover_image, t.name as tname "
               + "from show s, movie m, theatre t "
               + "where s.id_movie = m.id_movie "
               + "and t.id_theatre = s.id_theatre "
@@ -37,7 +39,8 @@ public class JdbiShowsDataService implements ShowsDataService {
               new ToLocalDate(l.get("start_time")).val(),
               l.get("name").toString(),
               Integer.valueOf(l.get("duration").toString()),
-              l.get("id_cover_image").toString(), l.get("tname").toString()))
+              l.get("id_cover_image").toString(), l.get("tname").toString(),
+              Float.valueOf(l.get("price").toString())))
           .collect(Collectors.toUnmodifiableList());
     });
   }
@@ -46,7 +49,8 @@ public class JdbiShowsDataService implements ShowsDataService {
   public ShowData show(Long idShow) {
     return jdbi.withHandle(handle -> {
       var show = handle.createQuery(
-          "select m.name, m.id_cover_image, m.duration, t.idtheatre, t.name as tname, s.start_time, "
+          "select m.name, m.id_cover_image, m.duration, t.id_theatre, t.name as tname"
+              + ", s.start_time, s.price, "
               + "b.reserved, b.confirmed, b.id_seat, se.number "
               + " from show s, booking b, seat se, movie m, theatre t "
               + " where s.id_show = :idshow and m.id_movie = s.id_movie"
@@ -64,6 +68,7 @@ public class JdbiShowsDataService implements ShowsDataService {
       var startTime = new ToLocalDate(show.get(0).get("start_time")).val();
       var idTheatre = Long.valueOf(show.get(0).get("id_theatre").toString());
       var theatreName = show.get(0).get("tname").toString();
+      var price = (BigDecimal) show.get(0).get("price");
 
       for (Map<String, Object> map : show) {
         seats.add(new SeatData(Long.valueOf(map.get("id_seat").toString()),
@@ -73,7 +78,7 @@ public class JdbiShowsDataService implements ShowsDataService {
       }
 
       return new ShowData(idShow, startTime, movieName, movieDuration,
-          coverImage, idTheatre, theatreName, seats);
+          coverImage, idTheatre, theatreName, seats, price.floatValue());
     });
   }
 
@@ -99,6 +104,20 @@ public class JdbiShowsDataService implements ShowsDataService {
     });
   }
 
+  @Override
+  public boolean isReservedBy(Long idShow, Long idUser, List<Long> idSeats) {
+    return jdbi.withHandle(handle -> {
+      var seatsChosen = handle.createQuery(
+          "select id_show, id_user, id_seat, reserved, confirmed, reserved_until "
+              + "from booking "
+              + "where id_show = :idshow and id_seat in (<idseats>)")
+          .bind("idshow", idShow).bindList("idseats", idSeats).mapToMap()
+          .list();
+
+      return reservedByUser(seatsChosen, idUser);
+    });
+  }
+
   private void checkReservedOrConfirmed(List<Map<String, Object>> seatsChosen) {
     if (seatsChosen.stream().anyMatch(m -> {
       return (new ToBoolean(m.get("reserved")).val() == true && LocalDateTime
@@ -110,9 +129,24 @@ public class JdbiShowsDataService implements ShowsDataService {
     }
   }
 
+  private boolean reservedByUser(List<Map<String, Object>> seatsChosen,
+      Long idUser) {
+    return seatsChosen.stream().allMatch(m -> {
+      var idUserdb = m.get("id_user");
+      if (idUserdb == null) {
+        return false;
+      }
+      return idUser.equals(Long.valueOf((Integer) idUserdb))
+          && new ToBoolean(m.get("reserved")).val() == true
+          && new ToBoolean(m.get("confirmed")).val() == false && LocalDateTime
+              .now().isBefore(new ToLocalDate(m.get("reserved_until")).val());
+    });
+  }
+
   @Override
-  public void confirm(Long idShow, Long idUser, List<Long> idSeats) {
-    jdbi.useTransaction(handle -> {
+  public ShowConfirmed confirm(Long idShow, Long idUser, List<Long> idSeats,
+      float totalAmount, int newPoints) {
+    return jdbi.inTransaction(handle -> {
       var seatsChosen = handle.createQuery(
           "select id_show, id_user, id_seat, reserved, confirmed, reserved_until "
               + "from booking "
@@ -120,19 +154,32 @@ public class JdbiShowsDataService implements ShowsDataService {
           .bind("idshow", idShow).bindList("idseats", idSeats).mapToMap()
           .list();
 
-      if (!seatsChosen.stream().allMatch(m -> {
-        return idUser.equals(Long.valueOf((Integer) m.get("id_user")))
-            && new ToBoolean(m.get("reserved")).val() == true
-            && new ToBoolean(m.get("confirmed")).val() == false && LocalDateTime
-                .now().isBefore(new ToLocalDate(m.get("reserved_until")).val());
-      })) {
+      if (!reservedByUser(seatsChosen, idUser)) {
         throw new DataException("You are not allowed to confirm the seats");
       }
 
+      // confirm all the seats
       handle
           .createUpdate("UPDATE booking SET confirmed = true "
               + "where id_show = :idshow and id_seat in (<idseats>)")
           .bind("idshow", idShow).bindList("idseats", idSeats).execute();
+
+      // calculate points earned by the user
+      handle
+          .createUpdate("UPDATE users SET points = points + :points "
+              + "where id_user = :iduser")
+          .bind("iduser", idUser).bind("points", newPoints).execute();
+
+      // create the sale
+      var timePayed = LocalDateTime.now();
+      var saleId = handle
+          .createUpdate("INSERT INTO sale(id_show, amount, id_user, payed_at) "
+              + "values(:idshow, :amount, :iduser, :date)")
+          .bind("idshow", idShow).bind("amount", totalAmount)
+          .bind("iduser", idUser).bind("date", timePayed)
+          .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
+
+      return new ShowConfirmed(saleId, timePayed);
     });
   }
 }
