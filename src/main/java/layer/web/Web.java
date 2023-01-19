@@ -20,13 +20,20 @@ public class Web {
   }
 
   public void start() {
-    Javalin app = Javalin.create().start(this.webPort);
+    Javalin app = Javalin.create(config -> {
+      config.plugins.enableCors(cors -> {
+        cors.add(it -> {
+          it.anyHost();
+        });
+      });
+    }).start(this.webPort);
+
     app.get("/movies", allMovies());
-    app.get("/movie", movieDetail());
-    app.get("/playing", playing());
-    app.get("/show", show());
-    app.post("/reserve", reserve());
-    app.post("/pay", confirmReservation());
+    app.get("/movies/{id}", movieDetail());
+    app.get("/shows", playing());
+    app.get("/shows/{id}", showDetail());
+    app.post("/shows/reserve", reserve());
+    app.post("/shows/pay", confirmReservation());
 
     app.exception(CinemaException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
@@ -71,10 +78,10 @@ public class Web {
   }
 
 
-  private Handler show() {
+  private Handler showDetail() {
     return ctx -> {
       ctx.json(Map.of("result", "success", "show",
-          this.shows.show(ctx.queryParamAsClass("id", Long.class).get())));
+          this.shows.show(ctx.pathParamAsClass("id", Long.class).get())));
     };
   }
 
@@ -87,7 +94,7 @@ public class Web {
   private Handler movieDetail() {
     return ctx -> {
       ctx.json(Map.of("result", "success", "movie",
-          this.movies.detail(ctx.queryParamAsClass("id", Long.class).get())));
+          this.movies.detail(ctx.pathParamAsClass("id", Long.class).get())));
     };
   }
 }
