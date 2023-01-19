@@ -6,17 +6,21 @@ import io.javalin.http.Handler;
 import layer.business.api.CinemaException;
 import layer.business.api.CinemaShows;
 import layer.business.api.Movies;
+import layer.business.api.Users;
 
 public class Web {
 
   private int webPort;
   private Movies movies;
   private CinemaShows shows;
+  private Users users;
 
-  public Web(int webPort, Movies moviesService, CinemaShows shows) {
+  public Web(int webPort, Movies moviesService, CinemaShows shows,
+      Users users) {
     this.webPort = webPort;
     this.movies = moviesService;
     this.shows = shows;
+    this.users = users;
   }
 
   public void start() {
@@ -34,6 +38,8 @@ public class Web {
     app.get("/shows/{id}", showDetail());
     app.post("/shows/reserve", reserve());
     app.post("/shows/pay", confirmReservation());
+    app.post("/login", login());
+    app.post("/logout", logout());
 
     app.exception(CinemaException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
@@ -49,6 +55,28 @@ public class Web {
       // for now just on console...
       e.printStackTrace();
     });
+  }
+
+  private Handler login() {
+    return ctx -> {
+      var r = ctx.bodyAsClass(LoginRequest.class);
+
+      var user = this.users.login(r.username(), r.password());
+
+      ctx.res().setHeader("Set-Cookie",
+          "token=" + user.token() + ";path=/; HttpOnly; ");
+
+      ctx.json(Map.of("result", "success", "user", user));
+    };
+  }
+
+  private Handler logout() {
+    return ctx -> {
+      // want register login/logout time?
+      // just remove the token cookie
+      ctx.removeCookie("token");
+      ctx.json(Map.of("result", "success"));
+    };
   }
 
   private Handler confirmReservation() {

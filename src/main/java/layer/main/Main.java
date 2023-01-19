@@ -3,7 +3,9 @@ package layer.main;
 import org.jdbi.v3.core.Jdbi;
 import layer.business.DefaultCinemaShows;
 import layer.business.DefaultMovies;
+import layer.business.DefaultUsers;
 import layer.business.MailTrapEmailService;
+import layer.business.PasetoToken;
 import layer.business.SomePaymentProvider;
 import layer.data.JdbiMoviesDataService;
 import layer.data.JdbiShowsDataService;
@@ -23,10 +25,11 @@ public class Main {
 
     String mtuser = System.getProperty("mailt-user");
     String mtpwd = System.getProperty("mailt-pwd");
+    String secret = System.getProperty("token-secret");
 
-    if (mtuser == null || mtpwd == null) {
+    if (mtuser == null || mtpwd == null || secret == null) {
       throw new IllegalArgumentException(
-          "mailt-user and mailt-pwd values must be passed as a jvm argument");
+          "mailt-user, mailt-pwd and secret values must be passed as a jvm argument");
     }
 
     var jdbi = Jdbi.create(connStr);
@@ -35,7 +38,9 @@ public class Main {
         new JdbiUserAuthDataService(jdbi),
         new MailTrapEmailService(mtuser, mtpwd, "info@cinema.com"),
         new SomePaymentProvider());
+    var users = new DefaultUsers(new JdbiUserAuthDataService(jdbi),
+        new PasetoToken(secret));
 
-    new Web(8888, movies, cinema).start();
+    new Web(8888, movies, cinema, users).start();
   }
 }
