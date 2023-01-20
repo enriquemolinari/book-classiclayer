@@ -41,6 +41,6 @@ public class Main {
     var users = new DefaultUsers(new JdbiUserAuthDataService(jdbi),
         new PasetoToken(secret));
 
-    new Web(8888, movies, cinema, users).start();
+    new Web("http://localhost:3000", 8888, movies, cinema, users).start();
   }
 }

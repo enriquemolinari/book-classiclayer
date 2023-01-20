@@ -14,20 +14,23 @@ public class Web {
   private Movies movies;
   private CinemaShows shows;
   private Users users;
+  private String corsAllowHost;
 
-  public Web(int webPort, Movies moviesService, CinemaShows shows,
-      Users users) {
+  public Web(String corsAllowHost, int webPort, Movies moviesService,
+      CinemaShows shows, Users users) {
     this.webPort = webPort;
     this.movies = moviesService;
     this.shows = shows;
     this.users = users;
+    this.corsAllowHost = corsAllowHost;
   }
 
   public void start() {
     Javalin app = Javalin.create(config -> {
       config.plugins.enableCors(cors -> {
         cors.add(it -> {
-          it.anyHost();
+          it.allowHost(this.corsAllowHost);
+          it.allowCredentials = true;
         });
       });
     }).start(this.webPort);
