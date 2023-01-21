@@ -3,7 +3,6 @@ package layer.web;
 import java.util.Map;
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
-import layer.business.api.CinemaException;
 import layer.business.api.CinemaShows;
 import layer.business.api.Movies;
 import layer.business.api.Users;
@@ -44,7 +43,7 @@ public class Web {
     app.post("/login", login());
     app.post("/logout", logout());
 
-    app.exception(CinemaException.class, (e, ctx) -> {
+    app.exception(RuntimeException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
       // log error in a stream...
       // for now just on console...
@@ -107,7 +106,6 @@ public class Web {
           this.shows.playingThisWeek()));
     };
   }
-
 
   private Handler showDetail() {
     return ctx -> {
