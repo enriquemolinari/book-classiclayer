@@ -336,28 +336,28 @@ class SetUpDatabase {
       handle.createUpdate(
           "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idFishMovie).bind(1, idTheatreA)
-          .bind(2, LocalDateTime.now().plusDays(2)).bind(3, new BigDecimal(21))
-          .execute();
+          .bind(2, LocalDateTime.now().plusDays(1).plusHours(1))
+          .bind(3, new BigDecimal(21)).execute();
 
       // show 2
       handle.createUpdate(
           "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idFishMovie).bind(1, idTheatreA)
-          .bind(2, LocalDateTime.now().plusDays(3)).bind(3, new BigDecimal(21))
-          .execute();
+          .bind(2, LocalDateTime.now().plusDays(1).plusHours(4))
+          .bind(3, new BigDecimal(21)).execute();
 
       // show 3
       handle.createUpdate(
           "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idSchoolMovie).bind(1, idTheatreB)
-          .bind(2, LocalDateTime.now().plusDays(1)).bind(3, new BigDecimal(19))
-          .execute();
+          .bind(2, LocalDateTime.now().plusDays(2).plusHours(1))
+          .bind(3, new BigDecimal(19)).execute();
 
       // show 4
       handle.createUpdate(
           "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
           .bind(0, idSchoolMovie).bind(1, idTheatreB)
-          .bind(2, LocalDateTime.now().plusDays(1).plusHours(5))
+          .bind(2, LocalDateTime.now().plusDays(2).plusHours(5))
           .bind(3, new BigDecimal(19)).execute();
 
       // show 5
