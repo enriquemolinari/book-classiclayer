@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface CinemaShows {
 
-  Iterable<ShowRecord> playingThisWeek();
+  Iterable<MovieShows> playingThisWeek();
 
   ShowRecord show(Long id);
 

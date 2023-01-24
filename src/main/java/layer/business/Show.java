@@ -3,6 +3,8 @@ package layer.business;
 import java.time.LocalDateTime;
 import java.util.List;
 import layer.business.api.ShowRecord;
+import layer.business.api.ShowTimeRecord;
+import layer.data.api.PlayingData;
 import layer.data.api.SeatData;
 import layer.data.api.ShowData;
 
@@ -14,10 +16,10 @@ public class Show {
   private float price;
 
   public Show(Long id, LocalDateTime startTime, int duration, String movieName,
-      String idCoverImage, String theatreName, float price) {
+      String theatreName, float price) {
     this.id = id;
     this.startTime = startTime;
-    this.movie = new Movie(movieName, duration, idCoverImage);
+    this.movie = new Movie(movieName, duration);
     this.theatre = new Theatre(theatreName);
     this.price = price;
   }
@@ -38,9 +40,20 @@ public class Show {
         showdata.theatreName(), showdata.price(), showdata.seats());
   }
 
+  public Show(PlayingData pData) {
+    this(pData.idShow(), pData.startTime(), pData.duration(), pData.movieName(),
+        pData.theatreName(), pData.price());
+  }
+
+  public ShowTimeRecord toTime() {
+    return new ShowTimeRecord(this.id, this.startDayTime(), this.finishAtTime(),
+        this.theatre.name(), this.price);
+  }
+
+
   public ShowRecord toRecord() {
-    return new ShowRecord(this.id, this.movie.name(), this.startDayTime(),
-        this.finishAtTime(), this.movie.imgCover(), this.theatre.name(),
+    return new ShowRecord(this.id, this.movie.name(), this.movie.duration(),
+        this.startDayTime(), this.finishAtTime(), this.theatre.name(),
         theatre.seats(), this.price);
   }
 

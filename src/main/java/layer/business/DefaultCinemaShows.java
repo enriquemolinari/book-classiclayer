@@ -1,11 +1,13 @@
 package layer.business;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import layer.business.api.CinemaException;
 import layer.business.api.CinemaShows;
 import layer.business.api.CreditCardRecord;
+import layer.business.api.MovieShows;
 import layer.business.api.ShowRecord;
 import layer.business.api.TicketRecord;
 import layer.data.api.DataException;
@@ -30,12 +32,26 @@ public class DefaultCinemaShows implements CinemaShows {
   }
 
   @Override
-  public Iterable<ShowRecord> playingThisWeek() {
+  public Iterable<MovieShows> playingThisWeek() {
     var playing = this.showData.playingNow(LocalDateTime.now().plusWeeks(1));
-    return playing.stream()
-        .map(p -> new Show(p.idShow(), p.startTime(), p.duration(),
-            p.movieName(), p.idCoverImage(), p.theatreName(), p.price())
-                .toRecord())
+    var movies = new ArrayList<Movie>();
+
+    for (int i = 0; i < playing.size();) {
+      var movieId = playing.get(i).movieId();
+      var movie = new Movie(playing.get(i).movieId(),
+          playing.get(i).movieName(), playing.get(i).duration());
+      for (int j = i; j < playing.size()
+          && movieId.equals(playing.get(j).movieId()); j++) {
+
+        var pData = playing.get(j);
+        var show = new Show(pData);
+        movie.addShow(show);
+        i++;
+      }
+      movies.add(movie);
+    }
+
+    return movies.stream().map(p -> p.toMovieShow())
         .collect(Collectors.toUnmodifiableList());
   }
 

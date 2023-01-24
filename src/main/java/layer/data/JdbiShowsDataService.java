@@ -27,19 +27,20 @@ public class JdbiShowsDataService implements ShowsDataService {
   public List<PlayingData> playingNow(LocalDateTime showsUntil) {
     return jdbi.withHandle(handle -> {
       var playingNow = handle.createQuery(
-          "select s.id_show, s.price, m.name, m.duration, s.start_time, m.id_cover_image, t.name as tname "
+          "select s.id_show, s.price, m.id_movie, m.name, m.duration, s.start_time, t.name as tname "
               + "from show s, movie m, theatre t "
               + "where s.id_movie = m.id_movie "
               + "and t.id_theatre = s.id_theatre "
-              + "and s.start_time <= :until")
+              + "and s.start_time <= :until order by m.id_movie")
           .bind("until", showsUntil).mapToMap().list();
 
       return playingNow.stream()
           .map(l -> new PlayingData(Long.valueOf(l.get("id_show").toString()),
               new ToLocalDate(l.get("start_time")).val(),
+              Long.valueOf(l.get("id_movie").toString()),
               l.get("name").toString(),
               Integer.valueOf(l.get("duration").toString()),
-              l.get("id_cover_image").toString(), l.get("tname").toString(),
+              l.get("tname").toString(),
               Float.valueOf(l.get("price").toString())))
           .collect(Collectors.toUnmodifiableList());
     });
