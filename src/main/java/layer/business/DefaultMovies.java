@@ -18,8 +18,8 @@ public class DefaultMovies implements Movies {
     var movies = this.movieData.allMovies();
 
     return movies.stream()
-        .map(m -> new Movie(m.idMovie(), m.name(), m.duration(), m.plot())
-            .toRecord())
+        .map(m -> new Movie(m.idMovie(), m.name(), m.duration(), m.plot(),
+            m.idCoverImage(), m.genres()).toRecord())
         .collect(Collectors.toList());
   }
 
@@ -28,6 +28,8 @@ public class DefaultMovies implements Movies {
     var m = this.movieData.movieDetail(id);
 
     return new Movie(m.shortMovie().idMovie(), m.shortMovie().name(),
-        m.shortMovie().duration(), m.shortMovie().plot(), m.casts()).toRecord();
+        m.shortMovie().duration(), m.shortMovie().plot(),
+        m.shortMovie().idCoverImage(), m.shortMovie().genres(), m.casts())
+            .toRecord();
   }
 }

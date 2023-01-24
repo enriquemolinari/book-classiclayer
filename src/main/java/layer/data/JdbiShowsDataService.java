@@ -3,6 +3,7 @@ package layer.data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,22 +28,47 @@ public class JdbiShowsDataService implements ShowsDataService {
   public List<PlayingData> playingNow(LocalDateTime showsUntil) {
     return jdbi.withHandle(handle -> {
       var playingNow = handle.createQuery(
-          "select s.id_show, s.price, m.id_movie, m.name, m.duration, s.start_time, t.name as tname "
+          "select s.id_show, s.price, m.id_movie, m.name, m.duration, m.id_cover_image, "
+              + "s.start_time, t.name as tname "
               + "from show s, movie m, theatre t "
               + "where s.id_movie = m.id_movie "
               + "and t.id_theatre = s.id_theatre "
               + "and s.start_time <= :until order by m.id_movie")
           .bind("until", showsUntil).mapToMap().list();
 
-      return playingNow.stream()
-          .map(l -> new PlayingData(Long.valueOf(l.get("id_show").toString()),
-              new ToLocalDate(l.get("start_time")).val(),
-              Long.valueOf(l.get("id_movie").toString()),
-              l.get("name").toString(),
-              Integer.valueOf(l.get("duration").toString()),
-              l.get("tname").toString(),
-              Float.valueOf(l.get("price").toString())))
+      var movieIds = playingNow.stream()
+          .map(p -> Long.valueOf(p.get("id_movie").toString()))
+          .collect(Collectors.toUnmodifiableSet());
+
+      var genres = handle.createQuery(
+          "select id_movie, GROUP_CONCAT(description separator ',') as desc "
+              + "from movie_genre mg, genre g "
+              + "where mg.id_genre = g.id_genre "
+              + "and id_movie in (<idmovies>) " + " group by id_movie")
+          .bindList("idmovies", movieIds).mapToMap().list();
+
+      var gens = genres.stream()
+          .map(g -> Map.of(Long.valueOf(g.get("id_movie").toString()),
+              Arrays.asList(g.get("desc").toString().split(","))))
           .collect(Collectors.toUnmodifiableList());
+
+      return playingNow.stream().map(l -> {
+
+        var idm = Long.valueOf(l.get("id_movie").toString());
+
+        var gensForM = gens.stream().filter(g -> g.containsKey(idm))
+            .collect(Collectors.toUnmodifiableList());
+
+        return new PlayingData(Long.valueOf(l.get("id_show").toString()),
+            new ToLocalDate(l.get("start_time")).val(),
+            Long.valueOf(l.get("id_movie").toString()),
+            l.get("name").toString(),
+            Integer.valueOf(l.get("duration").toString()),
+            l.get("id_cover_image").toString(), gensForM.get(0).get(idm),
+            l.get("tname").toString(),
+            Float.valueOf(l.get("price").toString()));
+      }).collect(Collectors.toUnmodifiableList());
+
     });
   }
 

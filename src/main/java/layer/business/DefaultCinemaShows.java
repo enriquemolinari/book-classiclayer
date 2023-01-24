@@ -39,7 +39,8 @@ public class DefaultCinemaShows implements CinemaShows {
     for (int i = 0; i < playing.size();) {
       var movieId = playing.get(i).movieId();
       var movie = new Movie(playing.get(i).movieId(),
-          playing.get(i).movieName(), playing.get(i).duration());
+          playing.get(i).movieName(), playing.get(i).duration(), null,
+          playing.get(i).coverImg(), playing.get(i).genres());
       for (int j = i; j < playing.size()
           && movieId.equals(playing.get(j).movieId()); j++) {
 

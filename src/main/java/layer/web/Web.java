@@ -3,6 +3,7 @@ package layer.web;
 import java.util.Map;
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
+import io.javalin.http.staticfiles.Location;
 import layer.business.api.CinemaShows;
 import layer.business.api.Movies;
 import layer.business.api.Users;
@@ -26,6 +27,12 @@ public class Web {
 
   public void start() {
     Javalin app = Javalin.create(config -> {
+      config.staticFiles.add(s -> {
+        s.hostedPath = "/assets";
+        s.directory = "/public";
+        s.location = Location.CLASSPATH;
+      });
+
       config.plugins.enableCors(cors -> {
         cors.add(it -> {
           it.allowHost(this.corsAllowHost);

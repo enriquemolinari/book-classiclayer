@@ -1,6 +1,8 @@
 package layer.data;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.jdbi.v3.core.Jdbi;
 import layer.data.api.FullMovieData;
@@ -19,17 +21,40 @@ public class JdbiMoviesDataService implements MoviesDataService {
   @Override
   public List<ShortMovieData> allMovies() {
     return jdbi.withHandle(handle -> {
+      // TODO: add genres
       var movies = handle.createQuery(
           "select id_movie, name, duration, plot, id_cover_image from movie")
           .mapToMap().list();
 
-      return movies.stream()
-          .map(m -> new ShortMovieData(
-              Long.valueOf(m.get("id_movie").toString()),
-              m.get("name").toString(), m.get("plot").toString(),
-              Integer.valueOf(m.get("duration").toString()),
-              m.get("id_cover_image").toString()))
+      var movieIds =
+          movies.stream().map(p -> Long.valueOf(p.get("id_movie").toString()))
+              .collect(Collectors.toUnmodifiableSet());
+
+      var genres = handle.createQuery(
+          "select id_movie, GROUP_CONCAT(description separator ',') as desc "
+              + "from movie_genre mg, genre g "
+              + "where mg.id_genre = g.id_genre "
+              + "and id_movie in (<idmovies>) " + " group by id_movie")
+          .bindList("idmovies", movieIds).mapToMap().list();
+
+      var gens = genres.stream()
+          .map(g -> Map.of(Long.valueOf(g.get("id_movie").toString()),
+              Arrays.asList(g.get("desc").toString().split(","))))
           .collect(Collectors.toUnmodifiableList());
+
+      return movies.stream().map(m -> {
+
+        var idm = Long.valueOf(m.get("id_movie").toString());
+
+        var gensForM = gens.stream().filter(g -> g.containsKey(idm))
+            .collect(Collectors.toUnmodifiableList());
+
+        return new ShortMovieData(Long.valueOf(m.get("id_movie").toString()),
+            m.get("name").toString(), m.get("plot").toString(),
+            Integer.valueOf(m.get("duration").toString()),
+            gensForM.get(0).get(idm), m.get("id_cover_image").toString());
+
+      }).collect(Collectors.toUnmodifiableList());
     });
   }
 
@@ -39,6 +64,11 @@ public class JdbiMoviesDataService implements MoviesDataService {
       var movie = handle.createQuery(
           "select id_movie, name, duration, plot, id_cover_image from movie where id_movie = :idmovie")
           .bind("idmovie", idMovie).mapToMap().one();
+
+      var genres = handle
+          .createQuery("select g.description from movie_genre mg, genre g "
+              + "where g.id_genre = mg.id_genre and mg.id_movie = :idmovie")
+          .bind("idmovie", idMovie).mapTo(String.class).list();
 
       var movieCast = handle.createQuery(
           "select p.name, p.surname, character_name from movie_cast mc, person p "
@@ -53,7 +83,7 @@ public class JdbiMoviesDataService implements MoviesDataService {
       return new FullMovieData(
           new ShortMovieData(Long.valueOf(movie.get("id_movie").toString()),
               movie.get("name").toString(), movie.get("plot").toString(),
-              Integer.valueOf(movie.get("duration").toString()),
+              Integer.valueOf(movie.get("duration").toString()), genres,
               movie.get("id_cover_image").toString()),
           castList);
     });

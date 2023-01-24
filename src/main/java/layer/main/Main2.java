@@ -18,7 +18,7 @@ public class Main2 {
         new MailTrapEmailService(null, null, "info@cinema.com"),
         new SomePaymentProvider());
 
-    cinema.playingThisWeek();
+    System.out.println(cinema.playingThisWeek());
 
   }
 

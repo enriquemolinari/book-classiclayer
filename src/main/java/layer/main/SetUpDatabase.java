@@ -27,6 +27,16 @@ class SetUpDatabase {
           + "primary key generated always as identity (start with 1,increment by 1), "
           + "name VARCHAR(255), id_cover_image varchar(10), duration INT, plot varchar(750))");
 
+      handle.execute("CREATE TABLE genre (id_genre INT NOT NULL "
+          + "primary key generated always as identity (start with 1,increment by 1), "
+          + "description VARCHAR(255))");
+
+      handle.execute("CREATE TABLE movie_genre (id_movie_genre INT NOT NULL "
+          + "primary key generated always as identity (start with 1,increment by 1), "
+          + "id_movie int, id_genre int,"
+          + "foreign key (id_movie) references movie,"
+          + "foreign key (id_genre) references genre)");
+
       handle.execute("CREATE TABLE theatre (id_theatre INT NOT NULL "
           + "primary key generated always as identity (start with 1,increment by 1), "
           + "name VARCHAR(255))");
@@ -91,20 +101,110 @@ class SetUpDatabase {
           + "id_movie INT not null, value decimal(2,1) not null, "
           + "foreign key (id_movie) references movie)");
 
+      // Genres
+
+      long idGenre1 =
+          handle.createUpdate("INSERT INTO genre (description) VALUES (?)")
+              .bind(0, "Comedy").executeAndReturnGeneratedKeys()
+              .mapTo(Long.class).one();
+
+      long idGenre2 =
+          handle.createUpdate("INSERT INTO genre (description) VALUES (?)")
+              .bind(0, "Crime").executeAndReturnGeneratedKeys()
+              .mapTo(Long.class).one();
+
+      long idGenre3 =
+          handle.createUpdate("INSERT INTO genre (description) VALUES (?)")
+              .bind(0, "Drama").executeAndReturnGeneratedKeys()
+              .mapTo(Long.class).one();
+
+      long idGenre4 =
+          handle.createUpdate("INSERT INTO genre (description) VALUES (?)")
+              .bind(0, "Thriller").executeAndReturnGeneratedKeys()
+              .mapTo(Long.class).one();
+
+      long idGenre5 =
+          handle.createUpdate("INSERT INTO genre (description) VALUES (?)")
+              .bind(0, "Mystery").executeAndReturnGeneratedKeys()
+              .mapTo(Long.class).one();
+
+      long idGenre6 =
+          handle.createUpdate("INSERT INTO genre (description) VALUES (?)")
+              .bind(0, "Action").executeAndReturnGeneratedKeys()
+              .mapTo(Long.class).one();
+
       // Movies
 
       long idSchoolMovie = handle.createUpdate(
           "INSERT INTO movie (name, id_cover_image, duration, plot) VALUES (?, ?, ?, ?)")
-          .bind(0, "Rock in the School").bind(1, "rockschool").bind(2, "109")
+          .bind(0, "Rock in the School").bind(1, "movie1-424").bind(2, "109")
           .bind(3,
               "A teacher tries to teach Rock & Roll music and history to elementary school kids.")
           .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
 
       long idFishMovie = handle.createUpdate(
           "INSERT INTO movie (name, id_cover_image, duration, plot) VALUES (?, ?, ?, ?)")
-          .bind(0, "Small Fish").bind(1, "smallfish").bind(2, "125")
+          .bind(0, "Small Fish").bind(1, "movie2-424").bind(2, "125")
           .bind(3, "A caring father teaches life values while fishing.")
           .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
+
+      long idMovie3 = handle.createUpdate(
+          "INSERT INTO movie (name, id_cover_image, duration, plot) VALUES (?, ?, ?, ?)")
+          .bind(0, "Crash Tea").bind(1, "movie3-424").bind(2, "105")
+          .bind(3, "A documentary about tea.").executeAndReturnGeneratedKeys()
+          .mapTo(Long.class).one();
+
+      long idMovie4 = handle.createUpdate(
+          "INSERT INTO movie (name, id_cover_image, duration, plot) VALUES (?, ?, ?, ?)")
+          .bind(0, "Running far away").bind(1, "movie4-424").bind(2, "105")
+          .bind(3,
+              "José a sad person run away from his town looking for new adventures.")
+          .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
+
+      // movies and genres
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idSchoolMovie).bind(1, idGenre1).execute();
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idSchoolMovie).bind(1, idGenre2).execute();
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idFishMovie).bind(1, idGenre3).execute();
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idFishMovie).bind(1, idGenre4).execute();
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idFishMovie).bind(1, idGenre5).execute();
+
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idMovie3).bind(1, idGenre5).execute();
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idMovie3).bind(1, idGenre2).execute();
+
+
+      handle
+          .createUpdate(
+              "INSERT INTO movie_genre (id_movie, id_genre) VALUES (?, ?)")
+          .bind(0, idMovie4).bind(1, idGenre1).execute();
+
 
       // People
 
@@ -157,6 +257,31 @@ class SetUpDatabase {
           .bind(0, "Nico").bind(1, "Molimini").bind(2, "nico@movies.com")
           .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
 
+      long idCast1 = handle
+          .createUpdate(
+              "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)")
+          .bind(0, "Camilo").bind(1, "Fernandez").bind(2, "camilo@mymovies.com")
+          .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
+
+      long idCast2 = handle
+          .createUpdate(
+              "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)")
+          .bind(0, "Franco").bind(1, "Elchow").bind(2, "franco@mymovies.com")
+          .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
+
+      long idCast3 = handle
+          .createUpdate(
+              "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)")
+          .bind(0, "Michael").bind(1, "Martinez")
+          .bind(2, "michael@mymovies.com").executeAndReturnGeneratedKeys()
+          .mapTo(Long.class).one();
+
+      long idCast4 = handle
+          .createUpdate(
+              "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)")
+          .bind(0, "Michel").bind(1, "Orenson").bind(2, "michel@mymovies.com")
+          .executeAndReturnGeneratedKeys().mapTo(Long.class).one();
+
       // Movie Cast
 
       handle.createUpdate(
@@ -178,6 +303,22 @@ class SetUpDatabase {
           "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
           .bind(0, idNervan).bind(1, idFishMovie)
           .bind(2, "Edward Blomsky (young)").execute();
+
+      handle.createUpdate(
+          "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
+          .bind(0, idCast1).bind(1, idMovie3).bind(2, "Judy").execute();
+
+      handle.createUpdate(
+          "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
+          .bind(0, idCast2).bind(1, idMovie3).bind(2, "George").execute();
+
+      handle.createUpdate(
+          "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
+          .bind(0, idCast3).bind(1, idMovie4).bind(2, "Mike").execute();
+
+      handle.createUpdate(
+          "INSERT INTO movie_cast (id_person, id_movie, character_name) VALUES (?, ?, ?)")
+          .bind(0, idCast4).bind(1, idMovie4).bind(2, "Teressa").execute();
 
       // Theatre
 
@@ -218,6 +359,20 @@ class SetUpDatabase {
           .bind(0, idSchoolMovie).bind(1, idTheatreB)
           .bind(2, LocalDateTime.now().plusDays(1).plusHours(5))
           .bind(3, new BigDecimal(19)).execute();
+
+      // show 5
+      handle.createUpdate(
+          "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
+          .bind(0, idMovie3).bind(1, idTheatreA)
+          .bind(2, LocalDateTime.now().plusDays(2).plusHours(2))
+          .bind(3, new BigDecimal(19)).execute();
+
+      // show 5
+      handle.createUpdate(
+          "INSERT INTO show (id_movie, id_theatre, start_time, price) VALUES (?, ?, ?, ?)")
+          .bind(0, idMovie4).bind(1, idTheatreB)
+          .bind(2, LocalDateTime.now().plusHours(2)).bind(3, new BigDecimal(19))
+          .execute();
 
       // Seats from Theatre A
 

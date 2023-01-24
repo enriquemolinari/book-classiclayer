@@ -1,6 +1,8 @@
 package layer.data.api;
 
-public record ShortMovieData(Long idMovie, String name, String plot, int duration,
-    String idCoverImage) {
+import java.util.List;
+
+public record ShortMovieData(Long idMovie, String name, String plot,
+    int duration, List<String> genres, String idCoverImage) {
 
 }

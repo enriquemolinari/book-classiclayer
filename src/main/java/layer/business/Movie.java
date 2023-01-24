@@ -17,6 +17,8 @@ class Movie {
   private String plot;
   private List<MovieCastData> cast = new ArrayList<>();
   private List<Show> shows = new ArrayList<>();
+  private String coverImg;
+  private List<String> genres = new ArrayList<>();
 
   public Movie(String name, int duration) {
     this.name = name;
@@ -35,14 +37,17 @@ class Movie {
     this.plot = plot;
   }
 
-  public Movie(Long id, String name, int duration, String plot) {
+  public Movie(Long id, String name, int duration, String plot, String coverImg,
+      List<String> genres) {
     this(name, duration, plot);
     this.id = id;
+    this.coverImg = coverImg;
+    this.genres = genres;
   }
 
-  public Movie(Long id, String name, int duration, String plot,
-      List<MovieCastData> cast) {
-    this(id, name, duration, plot);
+  public Movie(Long id, String name, int duration, String plot, String coverImg,
+      List<String> genres, List<MovieCastData> cast) {
+    this(id, name, duration, plot, coverImg, genres);
     this.id = id;
     this.cast = cast;
   }
@@ -53,7 +58,7 @@ class Movie {
         .collect(Collectors.toUnmodifiableList());
 
     return new MovieRecord(this.id, this.name, this.formattedDuration,
-        this.plot, mCasts);
+        this.plot, this.coverImg, this.genres, mCasts);
   }
 
   void addShow(Show show) {

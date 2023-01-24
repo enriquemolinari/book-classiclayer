@@ -21,7 +21,7 @@ public class Main {
     // client-server
     var connStr = "jdbc:hsqldb:hsql://localhost/xdb";
 
-    // new SetUpDatabase(connStr).start();
+    new SetUpDatabase(connStr).start();
 
     String mtuser = System.getProperty("mailt-user");
     String mtpwd = System.getProperty("mailt-pwd");
