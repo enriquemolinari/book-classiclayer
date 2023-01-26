@@ -1,5 +1,8 @@
 package layer.data.api;
 
-public record RatingData(Long numberOfVotes, Float value) {
+import java.util.List;
+
+public record RatingData(Long totalVotes, Float value,
+    List<RatingDetail> ratingDetail) {
 
 }

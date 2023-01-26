@@ -8,6 +8,7 @@ import layer.business.MailTrapEmailService;
 import layer.business.PasetoToken;
 import layer.business.SomePaymentProvider;
 import layer.data.JdbiMoviesDataService;
+import layer.data.JdbiRatingDataService;
 import layer.data.JdbiShowsDataService;
 import layer.data.JdbiUserAuthDataService;
 import layer.web.Web;
@@ -33,7 +34,8 @@ public class Main {
     }
 
     var jdbi = Jdbi.create(connStr);
-    var movies = new DefaultMovies(new JdbiMoviesDataService(jdbi));
+    var movies = new DefaultMovies(new JdbiMoviesDataService(jdbi),
+        new JdbiRatingDataService(jdbi));
     var cinema = new DefaultCinemaShows(new JdbiShowsDataService(jdbi),
         new JdbiUserAuthDataService(jdbi),
         new MailTrapEmailService(mtuser, mtpwd, "info@cinema.com"),

@@ -1,12 +1,17 @@
 package layer.business;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import layer.business.api.MovieCastRecord;
 import layer.business.api.MovieRecord;
 import layer.business.api.MovieShows;
 import layer.data.api.MovieCastData;
+import layer.data.api.RatingData;
 
 class Movie {
 
@@ -19,6 +24,9 @@ class Movie {
   private List<Show> shows = new ArrayList<>();
   private String coverImg;
   private List<String> genres = new ArrayList<>();
+  private LocalDate releaseDate;
+  private int ageRestriction;
+  private Ratings ratings;
 
   public Movie(String name, int duration) {
     this.name = name;
@@ -30,7 +38,6 @@ class Movie {
     this(name, duration);
     this.id = id;
   }
-
 
   public Movie(String name, int duration, String plot) {
     this(name, duration);
@@ -46,10 +53,15 @@ class Movie {
   }
 
   public Movie(Long id, String name, int duration, String plot, String coverImg,
-      List<String> genres, List<MovieCastData> cast) {
+      List<String> genres, List<MovieCastData> cast, LocalDate releaseDate,
+      int ageRestriction, RatingData ratingData) {
     this(id, name, duration, plot, coverImg, genres);
     this.id = id;
     this.cast = cast;
+    this.ageRestriction = ageRestriction;
+    this.releaseDate = releaseDate;
+    this.ratings = new Ratings(ratingData.value(), ratingData.totalVotes(),
+        ratingData.ratingDetail());
   }
 
   public MovieRecord toRecord() {
@@ -58,7 +70,13 @@ class Movie {
         .collect(Collectors.toUnmodifiableList());
 
     return new MovieRecord(this.id, this.name, this.formattedDuration,
-        this.plot, this.coverImg, this.genres, mCasts);
+        this.plot, this.coverImg, this.genres, mCasts, releaseDate(),
+        this.ageRestriction, this.ratings.toRecord());
+  }
+
+  String releaseDate() {
+    return this.releaseDate.format(DateTimeFormatter
+        .ofLocalizedDate(FormatStyle.LONG).withLocale(Locale.ENGLISH));
   }
 
   void addShow(Show show) {

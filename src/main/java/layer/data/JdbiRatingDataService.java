@@ -1,10 +1,13 @@
 package layer.data;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.jdbi.v3.core.Jdbi;
 import layer.data.api.DataException;
-import layer.data.api.RatingDataService;
 import layer.data.api.RatingData;
+import layer.data.api.RatingDataService;
+import layer.data.api.RatingDetail;
 
 public class JdbiRatingDataService implements RatingDataService {
 
@@ -15,15 +18,17 @@ public class JdbiRatingDataService implements RatingDataService {
   }
 
   @Override
-  public void rate(Long idUser, Long idMovie, BigDecimal value) {
+  public void rate(Long idUser, Long idMovie, int value) {
     checkUserHasVoted(idUser, idMovie);
 
     jdbi.useTransaction(handle -> {
       // there should be a lock here to make this work properly
       // I will leave this without implemented it properly as it is not the purpose of this code
       // reader: remember that locking using 'for update' does not work when use agregation functions
-      var actualValues = handle.createQuery(
-          "SELECT SUM(value) as total_sum, count(value) as total_count from rating_detail where id_movie = :idmovie")
+      var actualValues = handle
+          .createQuery(
+              "SELECT SUM(value) as total_sum, count(value) as total_count "
+                  + "from rating_detail where id_movie = :idmovie")
           .bind("idmovie", idMovie).mapToMap().one();
 
       handle.createUpdate(
@@ -37,8 +42,9 @@ public class JdbiRatingDataService implements RatingDataService {
           .bind("idmovie", idMovie).mapTo(Integer.class).findOne();
 
       existARate.ifPresentOrElse((p) -> {
-        var newValue = (((BigDecimal) actualValues.get("total_sum")).add(value))
-            .floatValue() / ((Long) actualValues.get("total_count") + 1);
+        var newValue = (((BigDecimal) actualValues.get("total_sum"))
+            .add(new BigDecimal(value))).floatValue()
+            / ((Long) actualValues.get("total_count") + 1);
 
         handle
             .createUpdate(
@@ -59,15 +65,24 @@ public class JdbiRatingDataService implements RatingDataService {
           .createQuery("SELECT value from rating where id_movie = :idmovie")
           .bind("idmovie", idMovie).mapTo(Float.class).findOne();
 
-      var numberOfVotes = handle.createQuery(
-          "SELECT count(*) as votes from rating_detail where id_movie = :idmovie")
-          .bind("idmovie", idMovie).mapTo(Long.class).one();
+      var ratingDetail = handle.createQuery(
+          "select username, comment, value, created_at from rating_detail rd, users u where rd.id_user = u.id_user and id_movie = :idmovie")
+          .bind("idmovie", idMovie).mapToMap().list();
 
       if (ratingValue.isEmpty()) {
-        return new RatingData(numberOfVotes, 0F);
+        return new RatingData(0L, 0F, List.of());
       }
 
-      return new RatingData(numberOfVotes, ratingValue.get());
+      var details = ratingDetail.stream().map(rd -> {
+        return new RatingDetail(rd.get("username").toString(),
+            new ToLocalDate(rd.get("created_at")).val(),
+            Integer.valueOf(rd.get("value").toString()),
+            rd.get("comment").toString());
+
+      }).collect(Collectors.toUnmodifiableList());
+
+      return new RatingData(Long.valueOf(ratingDetail.size()),
+          ratingValue.get(), details);
     });
   }
 
