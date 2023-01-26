@@ -10,7 +10,7 @@ import layer.data.api.RatingDetail;
 public class Ratings {
 
   private List<UserRate> userRates = new ArrayList<>();
-  private float value;
+  private int value;
   private long totalVotes;
 
   public Ratings(float value, Long totalVotes, List<RatingDetail> details) {
@@ -18,7 +18,7 @@ public class Ratings {
       userRates.add(
           new UserRate(rd.username(), rd.value(), rd.comment(), rd.votedAt()));
     }
-    this.value = value;
+    this.value = Math.round(value);
     this.totalVotes = totalVotes;
   }
 
@@ -29,7 +29,8 @@ public class Ratings {
   }
 
   RatingRecord toRecord() {
-    return new RatingRecord(totalVotes, value, this.detailsRecord());
+    return new RatingRecord(totalVotes, String.valueOf(value) + ".0",
+        this.detailsRecord());
   }
 
 }
