@@ -15,6 +15,8 @@ import layer.data.api.RatingData;
 
 class Movie {
 
+  private static final String ACTOR_TYPE = "A";
+  private static final Object DIRECTOR_TYPE = "D";
   private Long id;
   private String name;
   private String formattedDuration;
@@ -65,14 +67,23 @@ class Movie {
   }
 
   public MovieRecord toRecord() {
-    var mCasts = this.cast.stream()
+    var mCasts = this.cast.stream().filter(c -> c.type().equals(ACTOR_TYPE))
         .map(c -> new MovieCastRecord(c.name(), c.surname(), c.characterName()))
         .collect(Collectors.toUnmodifiableList());
+
+    var directorName =
+        this.cast.stream().filter(c -> c.type().equals(DIRECTOR_TYPE))
+            .map(c -> c.name() + " " + c.surname()).findFirst().get();
 
     return new MovieRecord(this.id, this.name, this.formattedDuration,
         this.plot, this.coverImg, this.genres, mCasts,
         this.releaseDate == null ? null : releaseDate(), this.ageRestriction,
-        this.ratings == null ? null : this.ratings.toRecord());
+        this.ratings == null ? null : this.ratings.toRecord(), releaseYear(),
+        directorName);
+  }
+
+  int releaseYear() {
+    return this.releaseDate.getYear();
   }
 
   String releaseDate() {
