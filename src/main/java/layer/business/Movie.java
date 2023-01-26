@@ -71,9 +71,13 @@ class Movie {
         .map(c -> new MovieCastRecord(c.name(), c.surname(), c.characterName()))
         .collect(Collectors.toUnmodifiableList());
 
-    var directorName =
-        this.cast.stream().filter(c -> c.type().equals(DIRECTOR_TYPE))
-            .map(c -> c.name() + " " + c.surname()).findFirst().get();
+    var directorName = "";
+
+    if (mCasts.size() > 0) {
+      directorName =
+          this.cast.stream().filter(c -> c.type().equals(DIRECTOR_TYPE))
+              .map(c -> c.name() + " " + c.surname()).findFirst().get();
+    }
 
     return new MovieRecord(this.id, this.name, this.formattedDuration,
         this.plot, this.coverImg, this.genres, mCasts,
@@ -83,7 +87,7 @@ class Movie {
   }
 
   int releaseYear() {
-    return this.releaseDate.getYear();
+    return this.releaseDate == null ? 0 : this.releaseDate.getYear();
   }
 
   String releaseDate() {
