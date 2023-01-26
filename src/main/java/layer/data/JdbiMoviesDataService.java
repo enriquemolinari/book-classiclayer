@@ -23,7 +23,7 @@ public class JdbiMoviesDataService implements MoviesDataService {
     return jdbi.withHandle(handle -> {
 
       var movies = handle.createQuery(
-          "select id_movie, name, duration, plot, id_cover_image from movie")
+          "select id_movie, name, duration, plot, id_cover_image, release_date, age_restriction from movie")
           .mapToMap().list();
 
       var movieIds =
@@ -53,8 +53,7 @@ public class JdbiMoviesDataService implements MoviesDataService {
             m.get("name").toString(), m.get("plot").toString(),
             Integer.valueOf(m.get("duration").toString()),
             gensForM.get(0).get(idm), m.get("id_cover_image").toString(),
-            new ToLocalDate(m.get("release_date").toString()).val()
-                .toLocalDate(),
+            new ToLocalDate(m.get("release_date")).val().toLocalDate(),
             Integer.valueOf(m.get("age_restriction").toString()));
 
       }).collect(Collectors.toUnmodifiableList());

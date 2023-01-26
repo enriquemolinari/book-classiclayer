@@ -70,8 +70,9 @@ class Movie {
         .collect(Collectors.toUnmodifiableList());
 
     return new MovieRecord(this.id, this.name, this.formattedDuration,
-        this.plot, this.coverImg, this.genres, mCasts, releaseDate(),
-        this.ageRestriction, this.ratings.toRecord());
+        this.plot, this.coverImg, this.genres, mCasts,
+        this.releaseDate == null ? null : releaseDate(), this.ageRestriction,
+        this.ratings == null ? null : this.ratings.toRecord());
   }
 
   String releaseDate() {
