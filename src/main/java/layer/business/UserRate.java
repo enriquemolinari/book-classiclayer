@@ -8,10 +8,16 @@ import layer.business.api.RateRecord;
 
 public class UserRate {
 
+  private Long userId;
   private String userName;
   private int vote;
   private String comment;
   private LocalDateTime commentAt;
+
+  public UserRate(Long id, String userName, int vote, String comment) {
+    this(userName, vote, comment);
+    this.userId = id;
+  }
 
   public UserRate(String userName, int vote, String comment) {
     this.userName = userName;
@@ -28,6 +34,14 @@ public class UserRate {
 
   RateRecord toRecord() {
     return new RateRecord(userName, vote, commentAt(), comment);
+  }
+
+  int voteValue() {
+    return this.vote;
+  }
+
+  String comment() {
+    return this.comment;
   }
 
   String commentAt() {

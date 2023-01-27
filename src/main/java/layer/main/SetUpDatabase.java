@@ -436,7 +436,7 @@ class SetUpDatabase {
 
       PreparedBatch batchSeatsA = handle
           .prepareBatch("INSERT INTO seat (id_theatre, number) VALUES(?, ?)");
-      for (int i = 1; i <= 30; i++) {
+      for (int i = 1; i <= 70; i++) {
         batchSeatsA.bind(0, idTheatreA).bind(1, i).add();
       }
       batchSeatsA.execute();
@@ -445,7 +445,7 @@ class SetUpDatabase {
 
       PreparedBatch batchSeatsB = handle
           .prepareBatch("INSERT INTO seat (id_theatre, number) VALUES(?, ?)");
-      for (int i = 1; i <= 50; i++) {
+      for (int i = 1; i <= 70; i++) {
         batchSeatsB.bind(0, idTheatreB).bind(1, i).add();
       }
       batchSeatsB.execute();

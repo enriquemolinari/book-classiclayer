@@ -1,6 +1,7 @@
 package layer.data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jdbi.v3.core.Jdbi;
@@ -18,7 +19,7 @@ public class JdbiRatingDataService implements RatingDataService {
   }
 
   @Override
-  public void rate(Long idUser, Long idMovie, int value) {
+  public void rate(Long idUser, Long idMovie, int value, String comment) {
     checkUserHasVoted(idUser, idMovie);
 
     jdbi.useTransaction(handle -> {
@@ -32,9 +33,10 @@ public class JdbiRatingDataService implements RatingDataService {
           .bind("idmovie", idMovie).mapToMap().one();
 
       handle.createUpdate(
-          "INSERT INTO rating_detail(id_movie, id_user, value) values(:idmovie, :iduser, :value)")
+          "INSERT INTO rating_detail(id_movie, id_user, value, comment, created_at) "
+              + "values(:idmovie, :iduser, :value, :comment, :date)")
           .bind("idmovie", idMovie).bind("iduser", idUser).bind("value", value)
-          .execute();
+          .bind("comment", comment).bind("date", LocalDateTime.now()).execute();
 
       var existARate = handle
           .createQuery(
@@ -42,7 +44,7 @@ public class JdbiRatingDataService implements RatingDataService {
           .bind("idmovie", idMovie).mapTo(Integer.class).findOne();
 
       existARate.ifPresentOrElse((p) -> {
-        var newValue = (((BigDecimal) actualValues.get("total_sum"))
+        var newValue = ((new BigDecimal((Long) actualValues.get("total_sum")))
             .add(new BigDecimal(value))).floatValue()
             / ((Long) actualValues.get("total_count") + 1);
 

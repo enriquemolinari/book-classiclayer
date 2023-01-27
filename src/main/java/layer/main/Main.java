@@ -35,7 +35,7 @@ public class Main {
 
     var jdbi = Jdbi.create(connStr);
     var movies = new DefaultMovies(new JdbiMoviesDataService(jdbi),
-        new JdbiRatingDataService(jdbi));
+        new JdbiRatingDataService(jdbi), new JdbiUserAuthDataService(jdbi));
     var cinema = new DefaultCinemaShows(new JdbiShowsDataService(jdbi),
         new JdbiUserAuthDataService(jdbi),
         new MailTrapEmailService(mtuser, mtpwd, "info@cinema.com"),

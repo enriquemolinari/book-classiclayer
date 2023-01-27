@@ -49,6 +49,7 @@ public class Web {
     app.post("/shows/pay", confirmReservation());
     app.post("/login", login());
     app.post("/logout", logout());
+    app.post("/movies/{id}/rate", rateMovie());
 
     app.exception(RuntimeException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
@@ -64,6 +65,17 @@ public class Web {
       // for now just on console...
       e.printStackTrace();
     });
+  }
+
+  private Handler rateMovie() {
+    return ctx -> {
+      var r = ctx.bodyAsClass(RateMovieRequest.class);
+
+      this.movies.rateMovie(r.idu(),
+          ctx.pathParamAsClass("id", Long.class).get(), r.value(), r.comment());
+
+      ctx.json(Map.of("result", "success"));
+    };
   }
 
   private Handler login() {

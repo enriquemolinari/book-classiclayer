@@ -17,7 +17,7 @@ class Theatre {
 
     for (SeatData seatData : seats) {
       this.seats.add(new Seat(seatData.idSeat(), seatData.number(),
-          (!seatData.confirmed() || !seatData.reserved())));
+          (!seatData.confirmed() && !seatData.reserved())));
     }
   }
 
