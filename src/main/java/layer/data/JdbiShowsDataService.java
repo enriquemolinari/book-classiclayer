@@ -78,7 +78,7 @@ public class JdbiShowsDataService implements ShowsDataService {
       var show = handle.createQuery(
           "select m.name, m.id_cover_image, m.duration, t.id_theatre, t.name as tname"
               + ", s.start_time, s.price, "
-              + "b.reserved, b.confirmed, b.id_seat, se.number "
+              + "b.reserved, b.reserved_until, b.confirmed, b.id_seat, se.number "
               + " from show s, booking b, seat se, movie m, theatre t "
               + " where s.id_show = :idshow and m.id_movie = s.id_movie"
               + "  and s.id_show = b.id_show"
@@ -100,7 +100,9 @@ public class JdbiShowsDataService implements ShowsDataService {
       for (Map<String, Object> map : show) {
         seats.add(new SeatData(Long.valueOf(map.get("id_seat").toString()),
             Integer.valueOf(map.get("number").toString()),
-            Boolean.valueOf(map.get("reserved").toString()),
+            Boolean.valueOf(map.get("reserved").toString()) == true
+                && (LocalDateTime.now().isBefore(
+                    new ToLocalDate(map.get("reserved_until")).val())),
             Boolean.valueOf(map.get("confirmed").toString())));
       }
 
