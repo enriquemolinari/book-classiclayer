@@ -17,7 +17,7 @@ import layer.data.api.ShowsDataService;
 
 public class JdbiShowsDataService implements ShowsDataService {
 
-  private static final int MINUTES_TO_KEEP_RESERVATION = 15;
+  private static final int MINUTES_TO_KEEP_RESERVATION = 5;
   private Jdbi jdbi;
 
   public JdbiShowsDataService(Jdbi jdbi) {
