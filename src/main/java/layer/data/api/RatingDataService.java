@@ -7,4 +7,6 @@ public interface RatingDataService {
   void rate(Long idUser, Long idMovie, int value, String comment)
       throws DataException;
 
+  void checkUserHasRated(Long idUser, Long idMovie);
+
 }

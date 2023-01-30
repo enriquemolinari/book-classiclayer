@@ -50,6 +50,7 @@ public class Web {
     app.post("/login", login());
     app.post("/logout", logout());
     app.post("/movies/{id}/rate", rateMovie());
+    app.get("/movies/{id}/rate", retrieveRate());
 
     app.exception(RuntimeException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
@@ -65,6 +66,15 @@ public class Web {
       // for now just on console...
       e.printStackTrace();
     });
+  }
+
+  private Handler retrieveRate() {
+    return ctx -> {
+
+      var r = this.movies.rating(ctx.pathParamAsClass("id", Long.class).get());
+
+      ctx.json(Map.of("result", "success", "rating", r));
+    };
   }
 
   private Handler rateMovie() {

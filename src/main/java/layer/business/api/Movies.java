@@ -7,4 +7,7 @@ public interface Movies {
   MovieRecord detail(Long id);
 
   void rateMovie(Long userId, Long idMovie, int rateValu, String comment);
+
+  public RatingRecord rating(Long idMovie);
+
 }

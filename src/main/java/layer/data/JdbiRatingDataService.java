@@ -20,7 +20,7 @@ public class JdbiRatingDataService implements RatingDataService {
 
   @Override
   public void rate(Long idUser, Long idMovie, int value, String comment) {
-    checkUserHasVoted(idUser, idMovie);
+    checkUserHasRated(idUser, idMovie);
 
     jdbi.useTransaction(handle -> {
       // there should be a lock here to make this work properly
@@ -88,7 +88,8 @@ public class JdbiRatingDataService implements RatingDataService {
     });
   }
 
-  private void checkUserHasVoted(Long idUser, Long idMovie) {
+  @Override
+  public void checkUserHasRated(Long idUser, Long idMovie) {
     jdbi.useHandle(handle -> {
       var hasAlreadyVote = handle.createQuery(
           "SELECT 1 from rating_detail where id_movie = :idmovie and id_user = :iduser")

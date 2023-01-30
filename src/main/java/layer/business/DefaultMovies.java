@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 import layer.business.api.CinemaException;
 import layer.business.api.MovieRecord;
 import layer.business.api.Movies;
+import layer.business.api.RatingRecord;
 import layer.data.api.DataException;
 import layer.data.api.MoviesDataService;
 import layer.data.api.RatingDataService;
@@ -45,8 +46,24 @@ public class DefaultMovies implements Movies {
   }
 
   @Override
+  public RatingRecord rating(Long idMovie) {
+
+    var ratingData = this.ratingData.rate(idMovie);
+    var ratings = new Ratings(ratingData.value(), ratingData.totalVotes(),
+        ratingData.ratingDetail());
+    return ratings.toRecord();
+  }
+
+  @Override
   public void rateMovie(Long userId, Long idMovie, int rateValue,
       String comment) {
+
+    try {
+      this.ratingData.checkUserHasRated(userId, idMovie);
+    } catch (DataException de) {
+      throw new CinemaException(de, "You have already voted this movie");
+    }
+
     try {
       var user = this.usersData.details(userId);
       var uRate =
