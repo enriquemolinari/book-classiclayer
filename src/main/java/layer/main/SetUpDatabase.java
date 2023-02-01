@@ -8,7 +8,7 @@ import java.util.Map;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.PreparedBatch;
 
-class SetUpDatabase {
+public class SetUpDatabase {
 
   private String url;
 

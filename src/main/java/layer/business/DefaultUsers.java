@@ -1,6 +1,7 @@
 package layer.business;
 
 import java.util.Map;
+import layer.business.api.UnauthorizedException;
 import layer.business.api.UserRecord;
 import layer.business.api.Users;
 import layer.business.api.UsersException;
@@ -28,5 +29,10 @@ public class DefaultUsers implements Users {
 
     return new UserRecord(udata.get().id(), udata.get().userName(),
         udata.get().points(), base64Token);
+  }
+
+  @Override
+  public Long userIdFrom(String token) throws UnauthorizedException {
+    return this.token.userIdFrom(token);
   }
 }

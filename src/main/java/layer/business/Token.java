@@ -6,4 +6,6 @@ interface Token {
 
   String token(Map<String, Object> payload);
 
+  Long userIdFrom(String token);
+
 }

@@ -2,6 +2,6 @@ package layer.web;
 
 import java.util.List;
 
-public record ReservationRequest(Long ids, Long idu, List<Long> seats) {
+public record ReservationRequest(Long ids, List<Long> seats) {
 
 }

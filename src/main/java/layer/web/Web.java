@@ -2,10 +2,12 @@ package layer.web;
 
 import java.util.Map;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.staticfiles.Location;
 import layer.business.api.CinemaShows;
 import layer.business.api.Movies;
+import layer.business.api.UnauthorizedException;
 import layer.business.api.Users;
 
 public class Web {
@@ -15,6 +17,7 @@ public class Web {
   private CinemaShows shows;
   private Users users;
   private String corsAllowHost;
+  private Javalin app;
 
   public Web(String corsAllowHost, int webPort, Movies moviesService,
       CinemaShows shows, Users users) {
@@ -26,7 +29,7 @@ public class Web {
   }
 
   public void start() {
-    Javalin app = Javalin.create(config -> {
+    this.app = Javalin.create(config -> {
       config.staticFiles.add(s -> {
         s.hostedPath = "/assets";
         s.directory = "/public";
@@ -39,33 +42,43 @@ public class Web {
           it.allowCredentials = true;
         });
       });
-    }).start(this.webPort);
-
+    });
+    app.post("/login", login());
+    app.post("/logout", logout());
     app.get("/movies", allMovies());
     app.get("/movies/{id}", movieDetail());
+    app.post("/movies/{id}/rate", rateMovie());
+    app.get("/movies/{id}/rate", retrieveRate());
     app.get("/shows", playing());
     app.get("/shows/{id}", showDetail());
     app.post("/shows/reserve", reserve());
     app.post("/shows/pay", confirmReservation());
-    app.post("/login", login());
-    app.post("/logout", logout());
-    app.post("/movies/{id}/rate", rateMovie());
-    app.get("/movies/{id}/rate", retrieveRate());
+
+    app.exception(UnauthorizedException.class, (e, ctx) -> {
+      ctx.status(401);
+      ctx.json(Map.of("result", "error", "message", e.getMessage()));
+      // log error in a stream...
+    });
 
     app.exception(RuntimeException.class, (e, ctx) -> {
       ctx.json(Map.of("result", "error", "message", e.getMessage()));
       // log error in a stream...
-      // for now just on console...
-      e.printStackTrace();
     });
 
     app.exception(Exception.class, (e, ctx) -> {
       ctx.json(
-          Map.of("result", "error", "message", "Ups, somethong went wrong"));
+          Map.of("result", "error", "message", "Ups, something went wrong"));
       // log error in a stream...
-      // for now just on console...
-      e.printStackTrace();
-    });
+    }).start(this.webPort);
+  }
+
+  void close() {
+    this.app.close();
+  }
+
+  private Long checkLoggedIn(Context ctx) {
+    var tokenValue = ctx.cookie("token");
+    return this.users.userIdFrom(tokenValue);
   }
 
   private Handler retrieveRate() {
@@ -79,10 +92,11 @@ public class Web {
 
   private Handler rateMovie() {
     return ctx -> {
+      var uid = checkLoggedIn(ctx);
       var r = ctx.bodyAsClass(RateMovieRequest.class);
 
-      this.movies.rateMovie(r.idu(),
-          ctx.pathParamAsClass("id", Long.class).get(), r.value(), r.comment());
+      this.movies.rateMovie(uid, ctx.pathParamAsClass("id", Long.class).get(),
+          r.value(), r.comment());
 
       ctx.json(Map.of("result", "success"));
     };
@@ -113,9 +127,10 @@ public class Web {
   private Handler confirmReservation() {
     return ctx -> {
       var r = ctx.bodyAsClass(PaymentRequest.class);
+      var uid = checkLoggedIn(ctx);
 
       var ticket =
-          this.shows.pay(r.toCreditCardRecord(), r.ids(), r.idu(), r.seats());
+          this.shows.pay(r.toCreditCardRecord(), r.ids(), uid, r.seats());
       ctx.json(Map.of("result", "success", "ticket", ticket));
     };
   }
@@ -123,8 +138,9 @@ public class Web {
   private Handler reserve() {
     return ctx -> {
       var request = ctx.bodyAsClass(ReservationRequest.class);
+      var uid = checkLoggedIn(ctx);
 
-      this.shows.makeReservation(request.ids(), request.idu(), request.seats());
+      this.shows.makeReservation(request.ids(), uid, request.seats());
       ctx.json(Map.of("result", "success"));
     };
   }
@@ -149,7 +165,7 @@ public class Web {
     };
   }
 
-  private Handler movieDetail() {
+  public Handler movieDetail() {
     return ctx -> {
       ctx.json(Map.of("result", "success", "movie",
           this.movies.detail(ctx.pathParamAsClass("id", Long.class).get())));

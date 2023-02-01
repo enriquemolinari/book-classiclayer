@@ -4,8 +4,10 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
+import dev.paseto.jpaseto.Paseto;
 import dev.paseto.jpaseto.Pasetos;
 import dev.paseto.jpaseto.lang.Keys;
+import layer.business.api.UnauthorizedException;
 
 public class PasetoToken implements Token {
 
@@ -37,6 +39,19 @@ public class PasetoToken implements Token {
     pb.setExpiration(Instant.ofEpochSecond(this.expiration()));
 
     return pb.setSharedSecret(Keys.secretKey(this.base64Secret)).compact();
+  }
+
+  @Override
+  public Long userIdFrom(String token) {
+    Paseto tk;
+    try {
+      tk = Pasetos.parserBuilder()
+          .setSharedSecret(Keys.secretKey(this.base64Secret)).build()
+          .parse(token);
+      return tk.getClaims().get("id", Long.class);
+    } catch (Exception ex) {
+      throw new UnauthorizedException("Invalid token. You have to login.");
+    }
   }
 }
 
