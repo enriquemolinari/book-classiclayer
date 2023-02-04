@@ -5,58 +5,29 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import layer.business.DefaultCinemaShows;
-import layer.business.DefaultMovies;
-import layer.business.DefaultUsers;
-import layer.business.EmailService;
-import layer.business.PasetoToken;
-import layer.business.SomePaymentProvider;
-import layer.data.JdbiMoviesDataService;
-import layer.data.JdbiRatingDataService;
-import layer.data.JdbiShowsDataService;
-import layer.data.JdbiUserAuthDataService;
-import layer.main.SetUpDatabase;
 
 public class TestMovieApis {
 
-  private static Web web;
+  private static SetUp webApp;
 
   @BeforeAll
   public static void beforeAll() {
-    var connStr = "jdbc:hsqldb:mem;create=true";
-
-    new SetUpDatabase(connStr).start();
-
-    String secret = "bfhAp4qdm92bD0FIOZLanC66KgCS8cYVxq/KlSVdjhI=";
-
-    var jdbi = Jdbi.create(connStr);
-    var movies = new DefaultMovies(new JdbiMoviesDataService(jdbi),
-        new JdbiRatingDataService(jdbi), new JdbiUserAuthDataService(jdbi));
-    var cinema = new DefaultCinemaShows(new JdbiShowsDataService(jdbi),
-        new JdbiUserAuthDataService(jdbi), new EmailService() {
-          @Override
-          public void send(String emailTo, String subject, String message) {
-            // Do not send emails in functional tests
-          }
-        }, new SomePaymentProvider());
-    var users = new DefaultUsers(new JdbiUserAuthDataService(jdbi),
-        new PasetoToken(secret));
-
-    web = new Web("client-url", 8889, movies, cinema, users);
-    web.start();
+    webApp = new SetUp();
+    webApp.testEnvSetUp();
   }
+
 
   @Test
   public void testMovieDetail() {
     get("http://localhost:8889/movies/1").then()
-        .body("movie", hasKey("directorName")).body("movie", hasKey("coverImg"))
-        .rootPath("movie").body("name", equalTo("Rock in the School"))
-        .body("duration", equalTo("1hr 49mins"))
-        .body("genres", hasItems("Comedy", "Crime"))
+        .body("movie", hasKey("directorName")).and()
+        .body("movie", hasKey("coverImg")).rootPath("movie").and()
+        .body("name", equalTo("Rock in the School"))
+        .body("duration", equalTo("1hr 49mins")).and()
+        .body("genres", hasItems("Comedy", "Crime")).and()
         .body("cast.name", hasItems("Jake", "Josh"));
   }
 
@@ -73,7 +44,7 @@ public class TestMovieApis {
         .body("{\n" + "    \"value\": 5,\n"
             + "    \"comment\": \"Another comment ...\"\n" + "}")
         .post("http://localhost:8889/movies/{id}/rate", "1").then()
-        .body("result", equalTo("error"))
+        .body("result", equalTo("error")).and()
         .body("message", equalTo("Invalid token. You have to login."));
   }
 
@@ -97,10 +68,20 @@ public class TestMovieApis {
   }
 
   @Test
+  public void testRetrieveRate() {
+    get("http://localhost:8889/movies/1/rate").then()
+        .body("result", equalTo("success")).and()
+        .body("rating", hasKey("details")).and()
+        .body("rating.total", equalTo(2)).and()
+        .body("rating.details.username", hasItems("emolinari"))
+        .body("rating.details.vote", hasItems(4));
+  }
+
+  @Test
   public void testRateOk() {
     String token = given().contentType("application/json")
-        .body("{\n" + "    \"username\": \"jsimini\",\n"
-            + "    \"password\": \"123\"\n" + "}")
+        .body("{\"username\": \"jsimini\",\n" + "    \"password\": \"123\"\n"
+            + "}")
         .post("http://localhost:8889/login").body().jsonPath()
         .getString("user.token");
 
@@ -115,9 +96,24 @@ public class TestMovieApis {
         equalTo(2));
   }
 
+  @Test
+  public void testRateWithExpiredToken() {
+    String token =
+        "v2.local.KzZ-dO-hdFPpXSW3AD78shCn4S4cSaA20vwW9VzWiypDNjvr7xmqRChLvVQoSk_Kwm0dBNo273RfdfrbQyzntqWVywcAtbBC5hmSE1UZpr2O7dGsG5XXnP5Jns7bjjqq4U5fpA";
+
+    given().contentType("application/json")
+        .body("{\"value\": 5,\n" + "    \"comment\": \"Another comment ...\"\n"
+            + "}")
+        .cookie("token", token)
+        .post("http://localhost:8889/movies/{id}/rate", "1").then()
+        .body("result", equalTo("error"));
+
+  }
+
+
   @AfterAll
   public static void afterAll() {
-    web.close();
+    webApp.tearDown();
   }
 
 }
