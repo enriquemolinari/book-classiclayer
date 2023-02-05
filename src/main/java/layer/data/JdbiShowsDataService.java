@@ -143,6 +143,10 @@ public class JdbiShowsDataService implements ShowsDataService {
           .bind("idshow", idShow).bindList("idseats", idSeats).mapToMap()
           .list();
 
+      if (seatsChosen.size() == 0) {
+        return false;
+      }
+
       return reservedByUser(seatsChosen, idUser);
     });
   }

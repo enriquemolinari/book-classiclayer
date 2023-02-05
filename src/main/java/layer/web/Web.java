@@ -51,8 +51,8 @@ public class Web {
     app.get("/movies/{id}/rate", retrieveRate());
     app.get("/shows", playing());
     app.get("/shows/{id}", showDetail());
-    app.post("/shows/reserve", reserve());
-    app.post("/shows/pay", confirmReservation());
+    app.post("/shows/{id}/reserve", reserve());
+    app.post("/shows/{id}/pay", confirmReservation());
 
     app.exception(UnauthorizedException.class, (e, ctx) -> {
       ctx.status(401);
@@ -127,10 +127,11 @@ public class Web {
   private Handler confirmReservation() {
     return ctx -> {
       var r = ctx.bodyAsClass(PaymentRequest.class);
+      var showId = ctx.pathParamAsClass("id", Long.class).get();
       var uid = checkLoggedIn(ctx);
 
       var ticket =
-          this.shows.pay(r.toCreditCardRecord(), r.ids(), uid, r.seats());
+          this.shows.pay(r.toCreditCardRecord(), showId, uid, r.seats());
       ctx.json(Map.of("result", "success", "ticket", ticket));
     };
   }
@@ -138,9 +139,10 @@ public class Web {
   private Handler reserve() {
     return ctx -> {
       var request = ctx.bodyAsClass(ReservationRequest.class);
+      var showId = ctx.pathParamAsClass("id", Long.class).get();
       var uid = checkLoggedIn(ctx);
 
-      this.shows.makeReservation(request.ids(), uid, request.seats());
+      this.shows.makeReservation(showId, uid, request.seats());
       ctx.json(Map.of("result", "success"));
     };
   }
