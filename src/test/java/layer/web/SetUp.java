@@ -15,7 +15,7 @@ import layer.main.SetUpDatabase;
 
 public class SetUp {
 
-  public Web web;
+  private Web web;
 
   public Web testEnvSetUp() {
     var connStr = "jdbc:hsqldb:mem;create=true";
